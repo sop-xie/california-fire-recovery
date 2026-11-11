@@ -49,6 +49,11 @@ const formatAcres = (acres) =>
   acres >= 1e6 ? `${d3.format('.2~f')(acres / 1e6)}M` :
   acres >= 1e3 ? `${d3.format('.0f')(acres / 1e3)}K` : d3.format(',')(Math.round(acres));
 const formatPercent = d3.format('.0%');
+// The page is shown at a CSS zoom (weather.css: html { zoom: 0.9 }). Mouse positions on
+// ordinary HTML elements come back in on-screen pixels, so divide by this to get the page's
+// own pixels. (SVG positions are already converted by the browser.)
+const pageZoom = () => parseFloat(getComputedStyle(document.documentElement).zoom) || 1;
+const htmlPointer = (event, node) => d3.pointer(event, node).map((v) => v / pageZoom());
 const row = (label, value) => `<div class="row"><span>${label}</span><span>${value}</span></div>`;
 // Text versions of the legend colors: the same hues, darkened where the bar color is too light
 // to read as text.
@@ -267,7 +272,9 @@ function computeLayout() {
   const chartTop = chart.node().getBoundingClientRect().top + window.scrollY;
   const alertBar = document.querySelector('.alert-bar');
   const below = (alertBar ? alertBar.offsetHeight : 0) + FIT_BOTTOM_GAP;
-  const height = Math.round(Math.max(FIT_MIN_HEIGHT, Math.min(MAX_HEIGHT, window.innerHeight - chartTop - below)));
+  // The page is shown at a CSS zoom (weather.css); window sizes are in screen pixels, so
+  // convert the free space back into the page's own pixels.
+  const height = Math.round(Math.max(FIT_MIN_HEIGHT, Math.min(MAX_HEIGHT, (window.innerHeight - chartTop - below) / pageZoom())));
   const innerWidth = width - MARGIN.left - MARGIN.right;
   const innerHeight = height - MARGIN.top - MARGIN.bottom;
   const band = d3.scaleBand().domain(burnYears).range([0, innerWidth]).paddingInner(0.2).paddingOuter(0.1);
@@ -591,7 +598,7 @@ function hover(event) {
   }
   tooltip.property('hidden', false).html(html);
   // Next to the mouse: below and to the right, flipping left or up near the chart's edges.
-  const [mx, my] = d3.pointer(event, chart.node());
+  const [mx, my] = htmlPointer(event, chart.node());
   const tipWidth = tooltip.node().offsetWidth;
   const tipHeight = tooltip.node().offsetHeight;
   const chartWidth = chart.node().clientWidth;
@@ -723,6 +730,9 @@ const CITIES = [
 const MAP_SLACK = 0.4;          // share of the map's width/height it can be dragged past each edge
 const CLUSTER_GAP = 2;          // grid cells
 const MIN_SECOND_SHARE = 0.15;  // a second close-up only if that area is this share of the first
+const MIN_INSET_WIDTH = 150;    // px; narrowest close-up, so its caption still fits
+const MIN_BOX_SHAPE = 0.8;      // width / height limits for the box marked on the map
+const MAX_BOX_SHAPE = 1.4;
 const AREA_PAD = 4;             // grid cells of margin around a burn area
 const MIN_AREA_BOX = 14;        // grid cells: smallest box marked around a burn area
 const CAPTION_H = 40;           // px under each close-up for its caption
@@ -872,8 +882,9 @@ function fitBox(box) {
   const [x0, y0] = toScreen(box.c0, box.r0);
   const [x1, y1] = toScreen(box.c1, box.r1);
   const k = Math.min(MAX_ZOOM, 0.9 * Math.min(base.width / (x1 - x0), base.height / (y1 - y0)));
+  const z = pageZoom();  // d3.zoom's transform is in on-screen pixels
   return d3.zoomIdentity
-    .translate(base.width / 2 - k * (x0 + x1) / 2, base.height / 2 - k * (y0 + y1) / 2)
+    .translate((base.width / 2 - k * (x0 + x1) / 2) * z, (base.height / 2 - k * (y0 + y1) / 2) * z)
     .scale(Math.max(1, k));
 }
 
@@ -896,8 +907,9 @@ function resizeMap() {
   // Room to drag past California's edges, so the map can be moved even before zooming in.
   const slackX = width * MAP_SLACK;
   const slackY = height * MAP_SLACK;
-  zoom.extent([[0, 0], [width, height]])
-    .translateExtent([[-slackX, -slackY], [width + slackX, height + slackY]]);
+  const z = pageZoom();  // d3.zoom measures in on-screen pixels
+  zoom.extent([[0, 0], [width * z, height * z]])
+    .translateExtent([[-slackX * z, -slackY * z], [(width + slackX) * z, (height + slackY) * z]]);
   drawMap();
 }
 
@@ -934,7 +946,9 @@ function paintCells() {
 // A view maps grid cells to screen pixels: x = tx + sx * col, y = ty + sy * row.
 function mainView() {
   const k = transform.k * base.scale;
-  return { sx: k * aspect, sy: k, tx: transform.x + transform.k * base.ox, ty: transform.y + transform.k * base.oy };
+  // d3.zoom's transform is in on-screen pixels (it reads the mouse); drawing is in page pixels.
+  const z = pageZoom();
+  return { sx: k * aspect, sy: k, tx: transform.x / z + transform.k * base.ox, ty: transform.y / z + transform.k * base.oy };
 }
 
 // Draw California and the burned cells through one view.
@@ -965,9 +979,10 @@ function drawMap() {
   // Lines first, then every close-up on top, so no line crosses over a close-up.
   insets.forEach((inset) => drawLeaders(context, ratio, inset));
   insets.forEach((inset) => drawInset(context, ratio, inset));
+  // The hint only explains the close-ups; once the reader starts moving the map it goes away.
   mapHint.text(insets.length
     ? 'The blue boxes magnify the biggest burn areas. Click one to zoom in, or scroll on the map.'
-    : 'Scroll to zoom and drag to move. "All of California" brings the close-ups back.');
+    : '');
   // The way back only appears once the reader has zoomed, dragged or clicked a close-up.
   d3.select('#reset-zoom').property('hidden', showInsets || !cells);
 }
@@ -1004,20 +1019,36 @@ function layoutInsets(view) {
   const byNorth = [...cells.areas].sort((a, b) => (a.r0 + a.r1) - (b.r0 + b.r1));
   return cells.areas.map((burnArea, i) => {
     const slot = INSET_SLOTS[byNorth.indexOf(burnArea)];
-    const x = base.ox + slot.x * caWidth;
-    // Stretch each close-up to the map's right edge, using the empty space beside California.
-    const frame = { x, y: base.oy + slot.y * caHeight, w: Math.max(slot.w * caWidth, base.width - 6 - x), h: slot.h * caHeight };
+    // The box keeps roughly the burn area's own shape (between slightly tall and slightly wide),
+    // so it isn't squashed.
+    const areaShape = ((burnArea.c1 - burnArea.c0 + 2 * AREA_PAD) * aspect) / (burnArea.r1 - burnArea.r0 + 2 * AREA_PAD);
+    const shape = Math.max(MIN_BOX_SHAPE, Math.min(MAX_BOX_SHAPE, areaShape));
+    const box = areaBox(burnArea, shape);
+    // The close-up has the same shape as its box (picture part), right-aligned in the empty
+    // space beside California; it's only wider than that when the caption needs the room.
+    const height = slot.h * caHeight;
+    const pictureHeight = height - CAPTION_H - 2;
+    const leftLimit = base.ox + slot.x * caWidth;
+    const width = Math.min(base.width - 6 - leftLimit, Math.max(MIN_INSET_WIDTH, pictureHeight * shape + 2));
+    const frame = { x: base.width - 6 - width, y: base.oy + slot.y * caHeight, w: width, h: height };
     const content = { x: frame.x + 1, y: frame.y + 1, w: frame.w - 2, h: frame.h - CAPTION_H - 1 };
-    const box = areaBox(burnArea, content.w / content.h);
     const mark = {
       x: view.tx + view.sx * box.c0,
       y: view.ty + view.sy * box.r0,
       w: view.sx * (box.c1 - box.c0),
       h: view.sy * (box.r1 - box.r0),
     };
-    const sx = content.w / (box.c1 - box.c0);
-    const sy = content.h / (box.r1 - box.r0);
-    const inner = { sx, sy, tx: content.x - sx * box.c0, ty: content.y - sy * box.r0 };
+    // Magnify the box into the close-up without stretching it, centered; any extra width or
+    // height shows the land around it.
+    const scale = Math.min(content.w / ((box.c1 - box.c0) * aspect), content.h / (box.r1 - box.r0));
+    const sx = scale * aspect;
+    const sy = scale;
+    const inner = {
+      sx,
+      sy,
+      tx: content.x + content.w / 2 - sx * (box.c0 + box.c1) / 2,
+      ty: content.y + content.h / 2 - sy * (box.r0 + box.r1) / 2,
+    };
     return { burnArea, rank: i, frame, content, box, mark, view: inner };
   });
 }
@@ -1107,7 +1138,7 @@ const insetAt = (x, y) => insets.find((inset) => inBox(inset.frame, x, y) || inB
 
 // Clicking a close-up (or the box it magnifies) zooms the map onto that burn area.
 function mapClick(event) {
-  const [mx, my] = d3.pointer(event);
+  const [mx, my] = htmlPointer(event);
   const inset = insetAt(mx, my);
   if (!inset) return;
   showInsets = false;
@@ -1119,7 +1150,7 @@ function mapClick(event) {
 
 function mapHover(event) {
   if (!cells) return;
-  const [mx, my] = d3.pointer(event);
+  const [mx, my] = htmlPointer(event);
   const inset = insetAt(mx, my);
   canvas.style('cursor', inset ? 'pointer' : null);
   // Inside a close-up, read the cell under the pointer through the close-up's own view.

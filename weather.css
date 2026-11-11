@@ -341,3 +341,6 @@ main.studio { padding-top: 14px; }
 .screen .legend-big .swatch { width: 17px; height: 17px; border-radius: 4px; }
 .screen .legend-note { margin-top: 12px; padding-top: 10px; font-size: 0.92rem; line-height: 1.3; }
 .screen .pct-sample { font-size: 1.3rem; }
+
+/* Show the page at 90% size by default, like the browser's zoom set to 90%. */
+html { zoom: 0.9; }
