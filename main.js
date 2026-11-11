@@ -149,8 +149,8 @@ Promise.all([
     renderBars('mode');
     writeHash();
   });
-  d3.select('#back').on('click', () => zoomOut(true));
-  window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && zoomed !== null) zoomOut(true); });
+  d3.select('#back').on('click', () => zoomOut(true, 'zoom', true));
+  window.addEventListener('keydown', (event) => { if (event.key === 'Escape' && zoomed !== null) zoomOut(true, 'zoom', true); });
 
   setUpMap(meta, rings);
   window.addEventListener('hashchange', readHash);
@@ -227,8 +227,13 @@ function zoomTo(burnYear, updateHash, motion = 'zoom', startOver = false) {
   if (updateHash) writeHash();
 }
 
-function zoomOut(updateHash, motion = 'zoom') {
+// backToLatest: going back to all fire years (the back button or Esc) jumps the slider to the
+// latest August, so every bar shows filled in rather than staying at the year being watched.
+// Opening a link with a year in it keeps that year.
+function zoomOut(updateHash, motion = 'zoom', backToLatest = false) {
   zoomed = null;
+  stopPlay();
+  if (backToLatest) year = augusts[augusts.length - 1];
   cells = null;
   loadToken += 1;
   sliders.attr('min', augusts[0]);
