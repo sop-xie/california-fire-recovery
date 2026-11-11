@@ -1,0 +1,420 @@
+:root {
+  --surface: #fcfcfb;
+  --ink: #0b0b0b;
+  --ink-2: #52514e;
+  --muted: #898781;
+  --grid: #e1e0d9;
+  --axis: #c3c2b7;
+  --recovered-text: #3a7d1f;  /* darker green than the bars, so the numbers stay readable */
+  --cue: #1f5fa8;  /* instructions (drag, click): blue, unlike any data color */
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: 15px/1.5 "Libre Franklin", "Franklin Gothic Medium", "Helvetica Neue", Arial, sans-serif;
+}
+
+main {
+  max-width: 1320px;
+  margin: 0 auto;
+  padding: 32px 20px 48px;
+}
+
+h1, h2 { font-family: "Source Serif 4", Georgia, "Times New Roman", serif; }
+h1 { font-size: 2.1rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.01em; margin: 0 0 8px; }
+h2 { font-size: 1.05rem; margin: 0 0 6px; }
+.subtitle { color: var(--ink-2); margin: 0 0 16px; max-width: 70ch; }
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 24px;
+  min-height: 34px;
+  margin-bottom: 8px;
+}
+
+button {
+  font: inherit;
+  color: var(--ink);
+  background: var(--surface);
+  border: 1px solid var(--axis);
+  border-radius: 6px;
+  padding: 4px 12px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--ink-2); }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 16px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  color: var(--ink-2);
+  font-size: 0.85rem;
+}
+.legend li { display: flex; align-items: center; gap: 6px; }
+.legend .swatch { width: 12px; height: 12px; border-radius: 3px; flex: none; }
+.legend-column { flex-direction: column; }
+
+.chart { position: relative; margin: 0; }
+.chart svg { display: block; width: 100%; height: auto; overflow: visible; }
+
+.axis { font-family: inherit; }  /* d3 sets sans-serif on axes; use the page font */
+.axis text { fill: var(--ink-2); font-size: 12px; }
+.axis path, .axis line { stroke: var(--axis); }
+.grid line { stroke: var(--grid); }
+.grid path { display: none; }
+.axis-label { fill: var(--ink-2); font-size: 12px; }
+
+.layer { cursor: pointer; stroke: var(--surface); transition: opacity 150ms; }
+.layer.faded { opacity: 0.25; }
+g.layer rect { stroke-width: 0.5; }
+.year-outline { fill: none; stroke: var(--ink); stroke-width: 1.5; pointer-events: none; }
+
+.crosshair { stroke: var(--ink-2); stroke-width: 1; pointer-events: none; }
+
+.tooltip {
+  position: absolute;
+  z-index: 2;
+  pointer-events: none;
+  background: var(--surface);
+  border: 1px solid var(--axis);
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 0.85rem;
+  line-height: 1.4;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+  min-width: 180px;
+}
+.tooltip strong { display: block; margin-bottom: 2px; }
+.tooltip .row { display: flex; justify-content: space-between; gap: 16px; }
+.tooltip .row span:first-child { color: var(--ink-2); }
+.tooltip hr { border: 0; border-top: 1px solid var(--grid); margin: 6px 0; }
+
+.map-panel {
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--grid);
+}
+.map-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; }
+.map-header h2 { font-size: 1.3rem; margin: 0; }
+
+.time-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 12px;
+  max-width: 720px;
+}
+.time-controls input[type="range"] { flex: 1; min-width: 0; accent-color: var(--ink); }
+.time-controls output { font-weight: 600; min-width: 7.5em; }
+#play { min-width: 6.5em; }
+
+.map-layout { display: flex; flex-wrap: wrap; gap: 20px 32px; align-items: flex-start; }
+.map {
+  position: relative;
+  flex: 1 1 420px;
+  max-width: 620px;
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  overflow: hidden;
+  touch-action: none;
+}
+.map canvas { display: block; width: 100%; cursor: grab; }
+.map canvas:active { cursor: grabbing; }
+.map-button {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  padding: 7px 14px;
+  border: 0;
+  border-radius: 8px;
+  color: #fff;
+  background: var(--cue);
+  box-shadow: 0 2px 6px rgb(0 0 0 / 18%);
+}
+.map-button:hover { background: #164a85; }
+.map-side { flex: 1 1 220px; max-width: 320px; display: flex; flex-direction: column; gap: 16px; }
+
+.stats { margin: 0; display: grid; grid-template-columns: auto auto; gap: 4px 16px; font-size: 0.9rem; }
+.stats dt { color: var(--ink-2); }
+.stats dd { margin: 0; text-align: right; font-variant-numeric: tabular-nums; }
+.hint { color: var(--muted); font-size: 0.85rem; margin: 0; }
+
+.method { margin-top: 28px; max-width: 75ch; color: var(--ink-2); font-size: 0.9rem; }
+.method p { margin: 0 0 8px; }
+
+/* Comparison page (options.html) */
+.option { margin-top: 36px; }
+.option:first-of-type { margin-top: 24px; }
+.option h2 { font-size: 1.2rem; }
+.option-note { color: var(--ink-2); margin: 0 0 10px; max-width: 75ch; font-size: 0.9rem; }
+.option .legend { margin-bottom: 8px; }
+.legend .swatch.line { height: 3px; border-radius: 2px; }
+.tooltip .row.bold span { color: var(--ink); font-weight: 600; }
+.note-text { fill: var(--ink); font-size: 12px; font-weight: 600; paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.group-label { fill: var(--ink-2); font-size: 12px; }
+
+/* Main chart: fire-year bars */
+.toggle { display: inline-flex; border: 1px solid var(--axis); border-radius: 6px; overflow: hidden; }
+.toggle button { border: 0; border-radius: 0; padding: 4px 12px; color: var(--ink-2); }
+.toggle button + button { border-left: 1px solid var(--axis); }
+.toggle button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+.controls { justify-content: space-between; }
+.bar-label { fill: var(--recovered-text); font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; pointer-events: none; }
+
+/* Chart with its legend box beside it */
+.chart-controls { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 24px; margin: 8px 0 16px; }
+.chart-controls .time-controls { flex: 1 1 480px; margin: 0; }
+.chart-layout { display: flex; flex-wrap: wrap; gap: 20px 28px; align-items: flex-start; }
+.chart-layout .chart { flex: 1 1 620px; min-width: 0; }
+.legend-box {
+  flex: 0 0 250px;
+  border: 1px solid var(--axis);
+  border-radius: 10px;
+  padding: 18px 20px;
+  margin-top: 20px;
+}
+.legend-box h2 { font-family: inherit; font-size: 1.05rem; margin: 0 0 14px; }  /* chart keys stay sans, like the labels */
+.legend-big { flex-direction: column; gap: 12px; font-size: 1.05rem; color: var(--ink); }
+.legend-big li { gap: 12px; }
+.legend-big .swatch { width: 24px; height: 24px; border-radius: 5px; }
+.legend-note { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--grid); color: var(--ink-2); font-size: 0.95rem; line-height: 1.45; }
+.pct-sample { display: block; color: var(--recovered-text); font-weight: 700; font-size: 1.3rem; margin-bottom: 2px; }
+@media (max-width: 960px) {
+  .side-panel { flex: 1 1 100%; margin-top: 0; order: 0; }
+  .legend-big { flex-direction: row; flex-wrap: wrap; gap: 10px 20px; }
+}
+
+/* Instruction beside the slider */
+.slider-hint {
+  margin: 0;
+  color: var(--cue);
+  font-weight: 700;
+  font-size: 1.15rem;
+  flex: 0 1 auto;
+}
+.slider-hint span { margin-right: 4px; }
+.chart-controls .toggle { margin-left: auto; }
+
+/* Zoom prototype */
+.proto-note { margin: 0 0 12px; font-size: 0.85rem; color: var(--muted); }
+.chart-stage { position: relative; flex: 1 1 620px; min-width: 0; order: 1; overflow: hidden; }
+.zoom-map {
+  position: absolute;
+  /* Parked just past the right edge of the chart; slides in when a bar is clicked. */
+  transform: translateX(calc(100% + 80px));
+  pointer-events: none;
+  transition: transform 750ms cubic-bezier(0.65, 0, 0.35, 1);
+  border: 1px solid var(--grid);
+  border-radius: 8px;
+  overflow: hidden;
+  background: var(--surface);
+  touch-action: none;
+}
+.zoom-map.visible { transform: none; pointer-events: auto; }
+.zoom-map canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.zoom-map canvas:active { cursor: grabbing; }
+.year-ticks text { fill: var(--ink-2); font-size: 12px; }
+.year-ticks text.zoomed-year { fill: var(--ink); font-size: 16px; font-weight: 700; }
+.baseline { stroke: var(--axis); }
+.part-name { font-size: 15px; font-weight: 800; }
+.part-value { fill: var(--ink-2); font-size: 14px; font-variant-numeric: tabular-nums; }
+.part-leader { fill: none; stroke: var(--muted); stroke-width: 1; }
+
+/* Play button, year and hint above the slider; the slider itself lines up with the bars. */
+.slider-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin-bottom: 4px; }
+.slider-head .toggle { margin-left: auto; }
+.slider-head .year-label { display: flex; flex-direction: column; line-height: 1; min-width: 3.2em; }
+.year-month { font-size: 0.75rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-2); margin-bottom: 2px; }
+.year-number {
+  font-family: "Source Serif 4", Georgia, serif;
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--ink);
+  font-variant-numeric: lining-nums tabular-nums;
+  letter-spacing: -0.01em;
+}
+.slider-track { position: relative; height: 58px; }  /* room above the slider for the year tag */
+.year-slider {
+  --fill: 100%;
+  position: absolute;
+  top: 33px;
+  margin: 0;
+  height: 20px;
+  background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  transition: left 750ms cubic-bezier(0.65, 0, 0.35, 1), width 750ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+.year-slider:focus-visible { outline: 2px solid var(--cue); outline-offset: 4px; border-radius: 4px; }
+/* Track: dark up to the thumb, light after it. Thumb: 20px, matching SLIDER_THUMB in main.js. */
+.year-slider::-webkit-slider-runnable-track {
+  height: 6px;
+  border-radius: 3px;
+  background: linear-gradient(to right, var(--cue) var(--fill), #d9e3ef var(--fill));
+}
+.year-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  box-sizing: border-box;
+  width: 20px;
+  height: 20px;
+  margin-top: -7px;
+  border-radius: 50%;
+  background: var(--cue);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--cue);
+}
+.year-slider::-moz-range-track { height: 6px; border-radius: 3px; background: #d9e3ef; }
+.year-slider::-moz-range-progress { height: 6px; border-radius: 3px; background: var(--cue); }
+.year-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--cue);
+  border: 3px solid var(--surface);
+  box-shadow: 0 0 0 1px var(--cue);
+}
+.legend-setting { margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--grid); display: flex; flex-direction: column; gap: 8px; color: var(--ink-2); font-size: 0.9rem; }
+.legend-setting .toggle { align-self: flex-start; }
+
+/* Right-hand column: bar height buttons above the legend box. */
+.side-panel { flex: 0 0 250px; order: 2; display: flex; flex-direction: column; gap: 14px; margin-top: 4px; }
+.side-panel .legend-box { flex: none; margin-top: 0; }
+.mode-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.mode-buttons button {
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 10px 12px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+  color: var(--ink);
+  background: var(--surface);
+}
+.mode-buttons button[aria-pressed="true"] { background: var(--ink); color: var(--surface); }
+
+/* Back to the overview: first thing in the row above the slider when zoomed in. */
+.back-button {
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border: 1.5px solid var(--ink);
+  border-radius: 8px;
+}
+.back-button:hover { background: var(--ink); color: var(--surface); }
+.slider-head .play { font-size: 1.05rem; font-weight: 600; padding: 8px 16px; border: 1.5px solid var(--ink); border-radius: 8px; min-width: 11.5em; }
+.hints { display: flex; flex-direction: column; gap: 2px; }
+
+/* "Click a bar" annotation on the chart */
+.click-note { pointer-events: none; }
+.click-note text { fill: var(--cue); font-size: 16px; font-weight: 700; }
+.click-note path { fill: none; stroke: var(--cue); stroke-width: 2.5; stroke-linecap: round; }
+.click-note-head { fill: none; stroke: var(--cue); stroke-width: 2.2; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Hovered bar: thin blue outline, the same blue as the instructions. */
+.hover-outline { fill: none; stroke: var(--cue); stroke-width: 2; pointer-events: none; }
+.click-note text { paint-order: stroke; stroke: var(--surface); stroke-width: 4px; stroke-linejoin: round; }
+
+/* Attention cues until first use; skipped for readers who ask for reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .slider-hint.needs-attention .cue-arrow { display: inline-block; animation: cue-bob 1.2s ease-in-out infinite; }
+  .year-slider.needs-attention::-webkit-slider-thumb { animation: cue-pulse 1.6s ease-out infinite; }
+  .year-slider.needs-attention::-moz-range-thumb { animation: cue-pulse 1.6s ease-out infinite; }
+  .click-note.needs-attention path { animation: cue-fade 1.4s ease-in-out infinite; }
+}
+@keyframes cue-bob { 0%, 100% { transform: translateY(-1px); } 50% { transform: translateY(4px); } }
+@keyframes cue-pulse {
+  0% { box-shadow: 0 0 0 1px var(--cue), 0 0 0 0 rgb(31 95 168 / 55%); }
+  100% { box-shadow: 0 0 0 1px var(--cue), 0 0 0 12px rgb(31 95 168 / 0%); }
+}
+@keyframes cue-fade { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+/* Hovering the drag instruction lights up the slider. Comes after the cues so it wins. */
+.year-slider.glow::-webkit-slider-thumb { animation: none; background: #164a85; box-shadow: 0 0 0 1px #164a85, 0 0 0 8px rgb(31 95 168 / 30%); }
+.year-slider.glow::-moz-range-thumb { animation: none; background: #164a85; box-shadow: 0 0 0 1px #164a85, 0 0 0 8px rgb(31 95 168 / 30%); }
+.year-slider.glow::-webkit-slider-runnable-track { background: linear-gradient(to right, #164a85 var(--fill), #c4d4e8 var(--fill)); }
+.year-slider.glow::-moz-range-progress { background: #164a85; }
+
+/* Drawn down-arrow beside the slider instruction: thick, round ends. */
+.cue-arrow { width: 18px; height: 22px; vertical-align: -5px; margin-right: 6px; display: inline-block; overflow: visible; }
+.cue-arrow path { fill: none; stroke: currentColor; stroke-width: 2.8; stroke-linecap: round; stroke-linejoin: round; }
+
+/* Year tag riding above the slider thumb. */
+.thumb-year {
+  position: absolute;
+  top: 0;
+  padding: 2px 9px;
+  border-radius: 6px;
+  background: var(--cue);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+}
+.thumb-year::after {
+  content: "";
+  position: absolute;
+  left: var(--pointer, 50%);
+  bottom: -5px;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-bottom: 0;
+  border-top-color: var(--cue);
+}
+.thumb-year.gliding { transition: left 750ms cubic-bezier(0.65, 0, 0.35, 1); }
+
+/* Tooltip labels written in their legend colors (color set inline from main.js). */
+.tooltip .row.part, .tooltip .row.part span:first-child { color: inherit; font-weight: 700; }
+
+/* Map instruction, in the empty ocean at the bottom left of California. */
+.map-hint {
+  position: absolute;
+  left: 12px;
+  bottom: 12px;
+  max-width: 36%;
+  margin: 0;
+  color: var(--cue);
+  font-size: 0.9rem;
+  font-weight: 700;
+  line-height: 1.35;
+  pointer-events: none;
+}
+
+/* Map hover box: smaller than the bar tooltip, so it covers less of the map. */
+#map-tooltip { min-width: 0; padding: 5px 8px; font-size: 0.75rem; line-height: 1.35; border-radius: 5px; }
+#map-tooltip strong { font-size: 0.85rem; margin-bottom: 1px; }
+#map-tooltip .row { gap: 10px; }
+
+/* Bar hover box: a bit smaller. */
+#tooltip { min-width: 0; padding: 6px 9px; font-size: 0.78rem; line-height: 1.35; border-radius: 5px; }
+#tooltip strong { font-size: 0.85rem; }
+#tooltip .row { gap: 12px; }
+
+/* Footnotes under the chart: blue links that open in place. */
+.footnotes { margin-top: 32px; max-width: 75ch; display: flex; flex-direction: column; gap: 10px; font-size: 0.9rem; }
+.footnotes summary {
+  display: inline-block;
+  cursor: pointer;
+  list-style: none;
+  color: var(--cue);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.footnotes summary::-webkit-details-marker { display: none; }
+.footnotes summary::before { content: "+ "; text-decoration: none; display: inline-block; width: 1.1em; }
+.footnotes details[open] summary::before { content: "− "; }
+.footnotes summary:hover { color: #164a85; }
+.footnotes p { margin: 8px 0 0 1.1em; color: var(--ink-2); line-height: 1.55; }

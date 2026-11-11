@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Shoebill Stork Weather Channel: Fire Recovery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap">
+  <!-- Base styles from the main page, then the broadcast theme on top. -->
+  <link rel="stylesheet" href="style.css?v=final-1">
+  <link rel="stylesheet" href="weather.css?v=final-1">
+</head>
+<body>
+  <!-- Sky backdrop with light swooshes, drawn in CSS/SVG. -->
+  <div class="sky" aria-hidden="true">
+    <svg class="swoosh" viewBox="0 0 1440 900" preserveAspectRatio="none">
+      <path d="M-50 640 C 380 520, 900 760, 1500 560" />
+      <path d="M-50 700 C 420 600, 880 820, 1500 640" />
+      <path class="gold" d="M-50 760 C 460 690, 940 860, 1500 720" />
+    </svg>
+  </div>
+
+  <!-- A made-up station, so the page doesn't pass itself off as a real network. -->
+  <header class="station-bar">
+    <div class="station-logo" aria-label="Shoebill Stork Weather Channel">
+      <!-- Gray feather logo. -->
+      <svg class="logo-feather" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="feather" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#eef1f5" />
+            <stop offset="0.5" stop-color="#b5bcc6" />
+            <stop offset="1" stop-color="#7d8591" />
+          </linearGradient>
+        </defs>
+        <path d="M56 6 C 36 8 18 22 13 45 L 19 51 C 42 47 57 30 56 6 Z" fill="url(#feather)" />
+        <path d="M45 15 L 37 20 M 40 26 L 30 29 M 33 37 L 24 38 M 50 22 L 44 27 M 45 33 L 38 37" fill="none" stroke="#0d2f6b" stroke-width="1.6" stroke-linecap="round" opacity="0.55" />
+        <path d="M56 6 C 42 20 27 37 8 58" fill="none" stroke="#f7f9fb" stroke-width="2.2" stroke-linecap="round" />
+      </svg>
+      <div class="logo-words">
+        <span class="logo-top">Shoebill Stork</span>
+        <span class="logo-big">Weather Channel</span>
+      </div>
+    </div>
+    <button id="watch-live" class="watch-live" type="button">
+      <span class="live-dot" aria-hidden="true"></span> Watch live: fires recovering
+    </button>
+  </header>
+
+  <main class="studio">
+    <!-- "Currently" readouts; broadcast.js fills them from the chart's state. -->
+    <aside class="conditions" aria-label="Current readouts">
+      <div class="cond-place">
+        <span id="cond-title">California</span>
+        <small id="cond-when">Currently</small>
+      </div>
+      <dl class="cond-list">
+        <div><dt>Recovered</dt><dd id="cond-recovered" class="good">–</dd></div>
+        <div><dt>Still scarred</dt><dd id="cond-scarred" class="bad">–</dd></div>
+        <div><dt>Burned again</dt><dd id="cond-reburned">–</dd></div>
+      </dl>
+      <div class="dial" aria-label="Share of burned land grown back">
+        <svg viewBox="0 0 120 120" aria-hidden="true">
+          <circle class="dial-track" cx="60" cy="60" r="50" />
+          <circle id="dial-fill" class="dial-fill" cx="60" cy="60" r="50" />
+        </svg>
+        <div class="dial-text"><strong id="dial-value">–</strong><span>grown back</span></div>
+      </div>
+      <div class="radar">
+        <div class="radar-title">Satellite / burn map</div>
+        <svg id="radar-map" class="radar-map" viewBox="0 0 160 170" aria-hidden="true"></svg>
+      </div>
+    </aside>
+
+    <!-- The studio monitor with the interactive chart on it. -->
+    <section class="monitor">
+      <div class="screen">
+        <div class="screen-band">
+          <h1 id="title">How much of California's burned land grows back?</h1>
+        </div>
+        <p id="subtitle" class="subtitle"></p>
+        <div class="chart-layout">
+          <div class="side-panel">
+            <div class="mode-buttons" role="group" aria-label="Bar height">
+              <button type="button" data-mode="acres" aria-pressed="true">Acres</button>
+              <button type="button" data-mode="share" aria-pressed="false">Proportion</button>
+            </div>
+            <aside class="legend-box" aria-label="What the colors mean">
+              <h2>Each fire year's land</h2>
+              <ul id="legend" class="legend legend-big"></ul>
+              <p class="legend-note">
+                <span class="pct-sample">48%</span>
+                Percent of land that has recovered by the year selected.
+              </p>
+            </aside>
+          </div>
+          <div class="chart-stage">
+            <div class="slider-head">
+              <button id="back" class="back-button" type="button" hidden>← All fire years</button>
+              <button class="play" type="button">▶ Watch it recover</button>
+              <output class="year-label"></output>
+              <p class="slider-hint needs-attention">
+                <svg class="cue-arrow" viewBox="0 0 20 24" aria-hidden="true"><path d="M10 3V20M3.5 13.5L10 20L16.5 13.5"/></svg>
+                <span id="slider-hint-text">Drag the slider to see how much of each year had grown back.</span>
+              </p>
+            </div>
+            <div class="slider-track">
+              <output id="thumb-year" class="thumb-year" aria-hidden="true"></output>
+              <input class="year-slider needs-attention" type="range" step="1" aria-label="August shown">
+            </div>
+            <figure id="chart" class="chart">
+              <div id="tooltip" class="tooltip" role="status" hidden></div>
+            </figure>
+            <div id="zoom-map" class="zoom-map" aria-label="Map of the selected fire year's land">
+              <canvas id="map-canvas"></canvas>
+              <div id="map-tooltip" class="tooltip" role="status" hidden></div>
+              <p id="map-hint" class="map-hint"></p>
+              <button id="reset-zoom" type="button" class="map-button" hidden>← All of California</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="footnotes">
+      <details>
+        <summary>How "scarred" is measured</summary>
+        <p>
+          Burned land comes from NASA's MODIS burned-area product (MCD64A1). Greenness is MODIS
+          NDVI, a satellite measure of how green the land is. A 1 km square counts as
+          <em>scarred</em> when its August greenness is more than 0.05 below its own normal from
+          before the fire, after subtracting how much never-burned land within about 25 km changed
+          that year. That second step removes wet and dry years, so what remains is mostly the fire.
+        </p>
+        <p>
+          When land burns again, it turns gray in its old fire year's bar and counts under the newer
+          fire from then on, so no acre is counted twice. The percent above each bar is the share of
+          that year's land, not counting land that burned again, that is back to normal greenness.
+          About 4–5% of land that never burned also falls below the 0.05 line in a typical year, so
+          a small part of the red is ordinary variation rather than fire damage.
+        </p>
+      </details>
+      <details>
+        <summary>Wondering why we chose August? Click here</summary>
+        <p>
+          Each year we compare one month's greenness to the land's normal, and August is the
+          steadiest month. On the same land, greenness typically changes by about 0.02 from one
+          August to the next, but by about 0.06 from one January to the next. That January swing is
+          bigger than our 0.05 cutoff, so a dry winter would look like fire damage. Winter greenness
+          mostly depends on when the rains came. By August the grass is brown everywhere, so the
+          greenness left comes from trees and shrubs, which is where fire damage lasts.
+        </p>
+        <p>
+          Land is first checked in the August after the year it burned. Most California fires burn
+          between July and November, so the fire year's own August would catch only some of them,
+          weeks after they burned. Waiting gives every fire one full winter and spring to grow back
+          before its first check.
+        </p>
+      </details>
+    </section>
+  </main>
+
+  <!-- Alert bar: label, place and alert type, the crawl, and the clock. -->
+  <footer class="alert-bar" aria-label="Headlines">
+    <div class="alert-label">Recovery<br>alert</div>
+    <div class="alert-body">
+      <div class="alert-top"><span>California</span><span>Recovery update</span></div>
+      <div class="alert-crawl"><div id="ticker-track" class="ticker-track"></div></div>
+    </div>
+    <div id="station-clock" class="alert-clock"></div>
+  </footer>
+
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <script src="main.js?v=final-3"></script>
+  <script src="broadcast.js?v=final-1"></script>
+</body>
+</html>
