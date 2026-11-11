@@ -731,7 +731,7 @@ const CUE = '#1f5fa8';          // same blue as the page's instructions
 // the state (Nevada), the bigger one at the top and the second one below it.
 const INSET_SLOTS = [
   { x: 0.56, y: 0.01, w: 0.44, h: 0.31 },
-  { x: 0.72, y: 0.36, w: 0.28, h: 0.23 },
+  { x: 0.72, y: 0.35, w: 0.28, h: 0.27 },
 ];
 let insets = [];      // close-ups from the last draw, for clicks and hover
 let showInsets = true;
@@ -1004,7 +1004,9 @@ function layoutInsets(view) {
   const byNorth = [...cells.areas].sort((a, b) => (a.r0 + a.r1) - (b.r0 + b.r1));
   return cells.areas.map((burnArea, i) => {
     const slot = INSET_SLOTS[byNorth.indexOf(burnArea)];
-    const frame = { x: base.ox + slot.x * caWidth, y: base.oy + slot.y * caHeight, w: slot.w * caWidth, h: slot.h * caHeight };
+    const x = base.ox + slot.x * caWidth;
+    // Stretch each close-up to the map's right edge, using the empty space beside California.
+    const frame = { x, y: base.oy + slot.y * caHeight, w: Math.max(slot.w * caWidth, base.width - 6 - x), h: slot.h * caHeight };
     const content = { x: frame.x + 1, y: frame.y + 1, w: frame.w - 2, h: frame.h - CAPTION_H - 1 };
     const box = areaBox(burnArea, content.w / content.h);
     const mark = {
@@ -1072,23 +1074,31 @@ function drawInset(context, ratio, inset) {
     if (code === 's') scarred += cells.area[i];
     if (code === 'r') recovered += cells.area[i];
   }
-  const left = frame.x + 8;
-  const line1 = content.y + content.h + 16;
+  // Captions shrink to fit the close-up's width: shorter wording first, then a smaller font,
+  // and every line is capped at the box's width so no text spills out.
+  const left = frame.x + 7;
+  const room = frame.w - 14;
+  const size = Math.max(11, Math.min(15, frame.w / 13));
+  const font = (weight, px) => `${weight} ${px}px "Barlow Condensed", "Arial Narrow", sans-serif`;
+  const acresText = `${formatAcres(inset.burnArea.acres)} acres`;
   context.textBaseline = 'alphabetic';
+  context.font = font(700, size);
+  let name = `${inset.rank === 0 ? 'Biggest burn area' : 'Second biggest'} · ${acresText}`;
+  if (context.measureText(name).width > room) name = `${inset.rank === 0 ? 'Biggest' : '2nd biggest'} · ${acresText}`;
+  const line1 = content.y + content.h + size + 3;
+  const line2 = line1 + size + 2;
   context.fillStyle = '#0b0b0b';
-  context.font = '700 14px "Barlow Condensed", "Arial Narrow", sans-serif';
-  const name = inset.rank === 0 ? 'Biggest burn area' : 'Second biggest';
-  context.fillText(`${name} · ${formatAcres(inset.burnArea.acres)} acres`, left, line1, frame.w - 16);
+  context.fillText(name, left, line1, room);
   const share = scarred + recovered ? formatPercent(recovered / (scarred + recovered)) : '–';
   context.fillStyle = '#3a7d1f';
-  context.fillText(`${share} recovered`, left, line1 + 16);
+  context.fillText(`${share} recovered`, left, line2, room);
   const shareWidth = context.measureText(`${share} recovered`).width;
   // The click hint goes after the share only where it fits at full size.
   context.fillStyle = CUE;
-  context.font = '600 13px "Barlow Condensed", "Arial Narrow", sans-serif';
+  context.font = font(600, size - 1);
   const hint = '· click to zoom in';
-  if (shareWidth + 5 + context.measureText(hint).width <= frame.w - 16) {
-    context.fillText(hint, left + shareWidth + 5, line1 + 16);
+  if (shareWidth + 5 + context.measureText(hint).width <= room) {
+    context.fillText(hint, left + shareWidth + 5, line2);
   }
 }
 
