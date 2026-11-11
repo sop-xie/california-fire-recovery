@@ -1,0 +1,160 @@
+/* Fire mode: a charcoal + red/orange/yellow version of the weather theme. Every rule here only
+   applies while <html> has the class "fire-mode", which the Fire mode button switches on and off
+   (broadcast.js). The chart's data colors (scar red, recovered green, burned-again gray) stay the
+   same, since green = grown back is what makes the chart readable. */
+html.fire-mode {
+  --navy: #1c1917;         /* charcoal (was navy) */
+  --navy-2: #292524;       /* lighter charcoal (was navy) */
+  --accent: #f97316;       /* orange */
+  --gold: #f59e0b;         /* amber (was gold) */
+  --alert: #dc2626;
+  --alert-dark: #7f1d1d;
+  --on-dark: #fff7ed;
+  --on-dark-2: #e7d3bd;
+  --cue: #b45309;          /* deep amber instructions (was blue); readable on the light chart */
+  --ember: #fbbf24;        /* yellow */
+}
+html.fire-mode body { background: #0c0a09; color: var(--on-dark); }
+
+/* ---------- Backdrop: charcoal with a fire glow along the bottom ---------- */
+html.fire-mode .sky {
+  background:
+    radial-gradient(900px 260px at 18% 105%, rgb(234 88 12 / 55%), transparent 70%),
+    radial-gradient(800px 300px at 70% 110%, rgb(220 38 38 / 50%), transparent 70%),
+    radial-gradient(600px 220px at 95% 100%, rgb(251 191 36 / 35%), transparent 70%),
+    radial-gradient(1200px 500px at 50% -20%, rgb(68 64 60 / 60%), transparent 70%),
+    linear-gradient(180deg, #0c0a09 0%, #1c1917 55%, #2a1410 100%);
+}
+html.fire-mode .swoosh path { stroke: rgb(249 115 22 / 22%); }
+html.fire-mode .swoosh path.gold { stroke: rgb(251 191 36 / 45%); }
+
+/* ---------- Station bar ---------- */
+html.fire-mode .station-bar {
+  background: linear-gradient(180deg, #1c1917, #0c0a09);
+  border-bottom: 0;
+  box-shadow: 0 3px 0 #dc2626, 0 6px 0 #f97316, 0 9px 0 var(--ember), 0 14px 22px rgb(0 0 0 / 50%);
+  margin-bottom: 9px;
+}
+html.fire-mode .logo-top { color: var(--ember); }
+html.fire-mode .logo-big { background: linear-gradient(180deg, #fff7ed 0%, #fff7ed 50%, #fdba74 100%); -webkit-background-clip: text; background-clip: text; }
+html.fire-mode .logo-feather { filter: drop-shadow(0 0 6px rgb(249 115 22 / 60%)); }
+html.fire-mode .page-link { border-color: rgb(253 186 116 / 70%); }
+html.fire-mode .page-link:hover { background: var(--ember); color: var(--navy); }
+
+/* ---------- Conditions sidebar ---------- */
+html.fire-mode .conditions {
+  background: linear-gradient(180deg, #1c1917, #292524);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 45%), inset 0 0 0 1px rgb(249 115 22 / 30%);
+  border-top: 4px solid #f97316;
+}
+html.fire-mode .cond-place small { color: var(--ember); }
+html.fire-mode .cond-list dd:not(.good):not(.bad) { color: #fff7ed; }
+html.fire-mode .dial-track { stroke: rgb(253 186 116 / 25%); }
+html.fire-mode .radar { background: #0c0a09; box-shadow: inset 0 0 0 1px rgb(249 115 22 / 35%); }
+html.fire-mode .radar-title { background: rgb(249 115 22 / 18%); color: var(--ember); }
+html.fire-mode .radar-map .ca { fill: #3a2a20; stroke: #f59e0b; }
+html.fire-mode .radar-areas rect { fill: rgb(239 68 68 / 35%); stroke: #f87171; }
+html.fire-mode .radar-sweep { stroke: rgb(251 191 36 / 70%); }
+
+/* ---------- Monitor and its title band ---------- */
+html.fire-mode .monitor { background: linear-gradient(180deg, #292524, #0c0a09); box-shadow: 0 28px 60px rgb(0 0 0 / 60%), 0 0 40px rgb(234 88 12 / 18%), inset 0 1px 0 rgb(255 255 255 / 12%); }
+html.fire-mode .screen { --surface: #fdf8f2; }
+
+/* warm white, so the data colors read as before */
+html.fire-mode .screen-band {
+  background: linear-gradient(90deg, #1c1917 0%, #7f1d1d 55%, #c2410c 85%, #f59e0b 100%);
+  border-bottom: 4px solid var(--ember);
+}
+html.fire-mode .screen-band h1 { color: #fff7ed; text-shadow: 0 2px 0 rgb(0 0 0 / 45%), 0 0 18px rgb(249 115 22 / 45%); }
+
+/* ---------- Controls and legend on the screen ---------- */
+html.fire-mode .screen .slider-head .play { border-color: #dc2626; color: #b91c1c; }
+html.fire-mode .screen .slider-head .play:hover { background: #dc2626; color: #fff; }
+html.fire-mode .screen .back-button { border-color: var(--navy-2); color: var(--navy-2); }
+html.fire-mode .screen .mode-buttons button[aria-pressed="true"] { border-bottom-color: #f97316; }
+html.fire-mode .screen .legend-box { border-top-color: #f97316; }
+html.fire-mode .screen .legend-box h2 { color: #991b1b; }
+
+/* Slider in amber. */
+html.fire-mode .year-slider::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--cue) var(--fill), #f3e2cf var(--fill)); }
+html.fire-mode .year-slider::-moz-range-track { background: #f3e2cf; }
+html.fire-mode .year-slider.glow::-webkit-slider-thumb { background: #92400e; box-shadow: 0 0 0 1px #92400e, 0 0 0 8px rgb(180 83 9 / 30%); }
+html.fire-mode .year-slider.glow::-moz-range-thumb { background: #92400e; box-shadow: 0 0 0 1px #92400e, 0 0 0 8px rgb(180 83 9 / 30%); }
+html.fire-mode .year-slider.glow::-webkit-slider-runnable-track { background: linear-gradient(to right, #92400e var(--fill), #ecd2b4 var(--fill)); }
+html.fire-mode .year-slider.glow::-moz-range-progress { background: #92400e; }
+@keyframes cue-pulse-fire {
+  0% { box-shadow: 0 0 0 1px var(--cue), 0 0 0 0 rgb(180 83 9 / 55%); }
+  100% { box-shadow: 0 0 0 1px var(--cue), 0 0 0 12px rgb(180 83 9 / 0%); }
+}
+html.fire-mode .map-button:hover { background: #92400e; }
+
+/* ---------- Footnotes ---------- */
+html.fire-mode .footnotes { background: rgb(28 25 23 / 90%); box-shadow: inset 0 0 0 1px rgb(249 115 22 / 25%); }
+html.fire-mode .footnotes summary { color: var(--ember); }
+html.fire-mode .footnotes summary:hover { color: #fff7ed; }
+html.fire-mode .footnotes p { color: var(--on-dark-2); }
+
+/* ---------- Alert bar ---------- */
+html.fire-mode .alert-bar { background: #0c0a09; box-shadow: 0 -4px 0 #f97316, 0 -8px 24px rgb(0 0 0 / 50%); }
+html.fire-mode .alert-label { background: linear-gradient(180deg, #f97316, #dc2626); }
+html.fire-mode .alert-top { background: linear-gradient(90deg, #7f1d1d, #b91c1c 60%, #7f1d1d); }
+html.fire-mode .alert-top span:first-child { color: var(--ember); }
+html.fire-mode .alert-crawl { background: #1c1917; }
+html.fire-mode .ticker-item { color: #fde68a; }
+html.fire-mode .ticker-item::after { color: #f97316; }
+html.fire-mode .alert-clock { background: linear-gradient(180deg, #292524, #0c0a09); border-left-color: rgb(249 115 22 / 40%); color: var(--ember); }
+
+/* ---------- Writeup page ---------- */
+html.fire-mode .writeup-card { box-shadow: 0 24px 60px rgb(0 0 0 / 60%), 0 0 40px rgb(234 88 12 / 15%); }
+html.fire-mode .writeup-sub { color: var(--ember); }
+html.fire-mode .writeup-body h2 { color: #991b1b; border-bottom-color: #f97316; }
+html.fire-mode .writeup-body h3 { color: var(--navy-2); }
+html.fire-mode .facts summary { color: var(--cue); }
+
+/* The slider's attention pulse in amber. */
+@media (prefers-reduced-motion: no-preference) {
+  html.fire-mode .year-slider.needs-attention::-webkit-slider-thumb { animation-name: cue-pulse-fire; }
+  html.fire-mode .year-slider.needs-attention::-moz-range-thumb { animation-name: cue-pulse-fire; }
+}
+/* Ember feather: recolor the logo's gradient. */
+html.fire-mode #feather stop:nth-child(1) { stop-color: #fde68a; }
+html.fire-mode #feather stop:nth-child(2) { stop-color: #f97316; }
+html.fire-mode #feather stop:nth-child(3) { stop-color: #b91c1c; }
+
+/* ---------- Fire mode logo: the feather burns, the shoebill breathes fire ---------- */
+.station-bar .logo-feather { overflow: visible; }
+.feather-flames, .logo-feather .breath { display: none; }
+.lick { fill: url(#flame-grad); transform-box: fill-box; transform-origin: 50% 100%; }
+.logo-feather .jaw { transform-box: fill-box; transform-origin: 0% 0%; transition: transform 300ms ease; }
+.logo-feather .breath { transform-box: fill-box; transform-origin: 0% 50%; }
+
+html.fire-mode .feather-flames { display: inline; }
+html.fire-mode .logo-feather:not(.is-shoebill) { filter: drop-shadow(0 0 8px rgb(249 115 22 / 75%)); }
+html.fire-mode .logo-feather .jaw { transform: rotate(20deg); }   /* mouth open */
+html.fire-mode .logo-feather .breath { display: inline; }
+html.fire-mode .logo-feather.is-shoebill { filter: drop-shadow(0 0 6px rgb(249 115 22 / 55%)); }
+
+@media (prefers-reduced-motion: no-preference) {
+  html.fire-mode .lick { animation: lick 0.7s ease-in-out infinite alternate; }
+  html.fire-mode .lick-2 { animation-duration: 0.55s; animation-delay: -0.2s; }
+  html.fire-mode .lick-3 { animation-duration: 0.8s; animation-delay: -0.4s; }
+  /* Puffs of fire: blow out, flicker, fade, then a short pause. */
+  html.fire-mode .logo-feather .breath { animation: breath 2.4s ease-out infinite; }
+  html.fire-mode .logo-feather .jaw { animation: jaw 2.4s ease-in-out infinite; }
+}
+@keyframes lick {
+  0% { transform: scale(0.85, 0.75) skewX(-6deg); opacity: 0.85; }
+  100% { transform: scale(1.05, 1.15) skewX(6deg); opacity: 1; }
+}
+@keyframes breath {
+  0% { transform: scale(0.1, 0.4); opacity: 0; }
+  12% { transform: scale(0.9, 0.9); opacity: 1; }
+  25% { transform: scale(1.05, 1.1); opacity: 1; }
+  38% { transform: scale(1, 0.95); opacity: 1; }
+  55% { transform: scale(1.1, 1.15); opacity: 0; }
+  100% { transform: scale(0.1, 0.4); opacity: 0; }
+}
+@keyframes jaw {
+  0%, 60%, 100% { transform: rotate(8deg); }
+  10%, 45% { transform: rotate(22deg); }
+}

@@ -744,7 +744,10 @@ const MAX_BOX_SHAPE = 1.4;
 const AREA_PAD = 4;             // grid cells of margin around a burn area
 const MIN_AREA_BOX = 14;        // grid cells: smallest box marked around a burn area
 const CAPTION_H = 40;           // px under each close-up for its caption
-const CUE = '#1f5fa8';          // same blue as the page's instructions
+// Instruction color for the map's close-up boxes and lines: read from the page's --cue color,
+// so it follows the theme (blue normally, amber in fire mode).
+const cueColor = () => getComputedStyle(document.documentElement).getPropertyValue('--cue').trim() || '#1f5fa8';
+const fireMode = () => document.documentElement.classList.contains('fire-mode');
 // Where the close-ups go, as fractions of California's bounding box: the empty space east of
 // the state (Nevada), the bigger one at the top and the second one below it.
 const INSET_SLOTS = [
@@ -989,7 +992,7 @@ function drawMap() {
   insets.forEach((inset) => drawInset(context, ratio, inset));
   // The hint only explains the close-ups; once the reader starts moving the map it goes away.
   mapHint.text(insets.length
-    ? 'The blue boxes magnify the biggest burn areas. Click one to zoom in, or scroll on the map.'
+    ? `The ${fireMode() ? 'orange' : 'blue'} boxes magnify the biggest burn areas. Click one to zoom in, or scroll on the map.`
     : '');
   // The way back only appears once the reader has zoomed, dragged or clicked a close-up.
   d3.select('#reset-zoom').property('hidden', showInsets || !cells);
@@ -1071,7 +1074,7 @@ function drawLeaders(context, ratio, inset) {
   const right = frame.x + frame.w / 2 > mark.x + mark.w / 2;
   const up = frame.y + frame.h / 2 < mark.y + mark.h / 2;
   const pairs = right === up ? ['tl', 'br'] : ['tr', 'bl'];
-  context.strokeStyle = CUE;
+  context.strokeStyle = cueColor();
   context.lineWidth = 1.2;
   context.beginPath();
   for (const p of pairs) {
@@ -1096,7 +1099,7 @@ function drawInset(context, ratio, inset) {
   drawView(context, ratio, inset.view);
   context.restore();
   context.setTransform(ratio, 0, 0, ratio, 0, 0);
-  context.strokeStyle = CUE;
+  context.strokeStyle = cueColor();
   context.lineWidth = 2;
   context.strokeRect(frame.x, frame.y, frame.w, frame.h);
   context.lineWidth = 1;
@@ -1133,7 +1136,7 @@ function drawInset(context, ratio, inset) {
   context.fillText(`${share} recovered`, left, line2, room);
   const shareWidth = context.measureText(`${share} recovered`).width;
   // The click hint goes after the share only where it fits at full size.
-  context.fillStyle = CUE;
+  context.fillStyle = cueColor();
   context.font = font(600, size - 1);
   const hint = '· click to zoom in';
   if (shareWidth + 5 + context.measureText(hint).width <= room) {

@@ -116,3 +116,56 @@ d3.csv('data/scarred_area.csv?v=3', d3.autoType).then((rows) => {
   const html = items.map((text) => `<span class="ticker-item">${text}</span>`).join('');
   document.getElementById('ticker-track').innerHTML = html + html;  // twice, so the loop has no gap
 });
+
+// ---------- Fire mode ----------
+// The button under the stats box switches the page to the fire theme (fire.css) and back.
+// The choice is remembered in this browser, and the writeup page follows it.
+const fireButton = document.getElementById('fire-toggle');
+function applyFireMode(on) {
+  document.documentElement.classList.toggle('fire-mode', on);
+  fireButton.setAttribute('aria-pressed', String(on));
+  fireButton.querySelector('.fire-toggle-text').textContent = on ? 'Back to weather' : 'Fire mode';
+  try { localStorage.setItem('fireMode', on ? '1' : '0'); } catch (e) { /* private window: just don't remember */ }
+  if (typeof drawMap === 'function') drawMap();  // the map's close-up boxes take the theme's color
+}
+applyFireMode(document.documentElement.classList.contains('fire-mode'));
+fireButton.addEventListener('click', () => applyFireMode(!document.documentElement.classList.contains('fire-mode')));
+
+// ---------- Easter egg: the feather turns into a shoebill stork ----------
+const logo = document.querySelector('.station-bar .logo-feather');
+const FEATHER_SVG = logo.innerHTML;
+const SHOEBILL_SVG = `
+  <defs>
+    <linearGradient id="breath-grad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#fef3c7" />
+      <stop offset="0.35" stop-color="#fbbf24" />
+      <stop offset="0.7" stop-color="#f97316" />
+      <stop offset="1" stop-color="#dc2626" />
+    </linearGradient>
+  </defs>
+  <path d="M14 34 C 10 44 9 52 8 62 L 27 62 C 26 52 27 45 31 39 Z" fill="#7d8792" />
+  <path d="M11 21 C 6 17 7 11 12 12 C 11 15 13 17 15 18 Z" fill="#9aa4ae" />
+  <circle cx="24" cy="26" r="14" fill="#9aa4ae" />
+  <!-- Fire mode: the lower bill swings open (fire.css) and fire blows out of the mouth. -->
+  <g transform="translate(53 33)"><g class="breath">
+    <path d="M0 0 C 8 -7 19 -11 33 -8 C 26 -3 28 3 35 8 C 21 11 8 7 0 0 Z" fill="url(#breath-grad)" opacity="0.9" />
+    <path d="M0 0 C 7 -4 15 -6 24 -4 C 19 -1 20 2 25 5 C 15 7 6 4 0 0 Z" fill="#fbbf24" />
+    <path d="M0 0 C 5 -2 10 -3 15 -2 C 12 0 12 1 15 3 C 9 4 4 2 0 0 Z" fill="#fef3c7" />
+  </g></g>
+  <path class="jaw" d="M31 31 C 38 31.5 45 31.5 52 31 C 51 34 46 37 38 38.5 C 35 39 32 38.5 31 38 Z" fill="#c4bb95" />
+  <path d="M30 19 C 42 17 54 20 59 26 C 61 29 61 33 58 35 C 57 32 55 31 52 31 C 45 31.5 38 31.5 31 31 C 32 27 32 23 30 19 Z" fill="#d3cba8" />
+  <path d="M57 27 C 60 29 61 33 58 35 C 58 32 57 30 55 29 Z" fill="#7a6f4f" />
+  <circle cx="40" cy="24" r="1.1" fill="#a39773" />
+  <circle cx="46" cy="25.5" r="0.9" fill="#a39773" />
+  <circle cx="37" cy="35" r="1" fill="#a39773" />
+  <circle cx="23" cy="23" r="3.3" fill="#f2f0e1" />
+  <circle cx="23.7" cy="23" r="1.6" fill="#1a1a1a" />`;
+let isShoebill = false;
+logo.addEventListener('click', () => {
+  isShoebill = !isShoebill;
+  logo.innerHTML = isShoebill ? SHOEBILL_SVG : FEATHER_SVG;
+  logo.classList.toggle('is-shoebill', isShoebill);
+  logo.classList.remove('logo-pop');
+  void logo.getBoundingClientRect();  // restart the pop animation
+  logo.classList.add('logo-pop');
+});

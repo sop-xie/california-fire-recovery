@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Writeup: How Much of California's Burned Land Grows Back?</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap">
+  <link rel="stylesheet" href="style.css?v=final-1">
+  <link rel="stylesheet" href="weather.css?v=final-16">
+  <link rel="stylesheet" href="fire.css?v=final-17">
+  <!-- Turn fire mode on before the page draws, if this visitor chose it last time. -->
+  <script>try { if (localStorage.getItem('fireMode') === '1') document.documentElement.classList.add('fire-mode'); } catch (e) {}</script>
+</head>
+<body class="writeup-page">
+  <div class="sky" aria-hidden="true"></div>
+
+  <header class="station-bar">
+    <a class="station-logo" href="index.html" aria-label="Shoebill Stork Weather Channel: back to the chart">
+      <svg class="logo-feather" viewBox="0 0 64 64" aria-hidden="true">
+        <defs>
+          <linearGradient id="feather" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#eef1f5" />
+            <stop offset="0.5" stop-color="#b5bcc6" />
+            <stop offset="1" stop-color="#7d8591" />
+          </linearGradient>
+        </defs>
+        <path d="M56 6 C 36 8 18 22 13 45 L 19 51 C 42 47 57 30 56 6 Z" fill="url(#feather)" />
+        <path d="M45 15 L 37 20 M 40 26 L 30 29 M 33 37 L 24 38 M 50 22 L 44 27 M 45 33 L 38 37" fill="none" stroke="#0d2f6b" stroke-width="1.6" stroke-linecap="round" opacity="0.55" />
+        <path d="M56 6 C 42 20 27 37 8 58" fill="none" stroke="#f7f9fb" stroke-width="2.2" stroke-linecap="round" />
+        <!-- Fire mode: flames along the feather's edge (fire.css shows and animates them). -->
+        <linearGradient id="flame-grad" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stop-color="#fde68a" />
+          <stop offset="0.45" stop-color="#f97316" />
+          <stop offset="1" stop-color="#dc2626" />
+        </linearGradient>
+        <g class="feather-flames">
+          <g transform="translate(54 9) scale(1.5)"><path class="lick" d="M0 0 C -3.2 -2.5 -3.4 -6.5 0 -12 C 3.4 -6.5 3.2 -2.5 0 0 Z" /></g>
+          <g transform="translate(44 11) scale(1.25)"><path class="lick lick-2" d="M0 0 C -3.2 -2.5 -3.4 -6.5 0 -12 C 3.4 -6.5 3.2 -2.5 0 0 Z" /></g>
+          <g transform="translate(34 16) scale(1.45)"><path class="lick lick-3" d="M0 0 C -3.2 -2.5 -3.4 -6.5 0 -12 C 3.4 -6.5 3.2 -2.5 0 0 Z" /></g>
+          <g transform="translate(25 24) scale(1.15)"><path class="lick lick-2" d="M0 0 C -3.2 -2.5 -3.4 -6.5 0 -12 C 3.4 -6.5 3.2 -2.5 0 0 Z" /></g>
+          <g transform="translate(18 33) scale(1.3)"><path class="lick" d="M0 0 C -3.2 -2.5 -3.4 -6.5 0 -12 C 3.4 -6.5 3.2 -2.5 0 0 Z" /></g>
+        </g>
+      </svg>
+      <div class="logo-words">
+        <span class="logo-top">Shoebill Stork</span>
+        <span class="logo-big">Weather Channel</span>
+      </div>
+    </a>
+    <a class="page-link" href="index.html">← Back to the chart</a>
+  </header>
+
+  <main class="writeup">
+    <article class="writeup-card">
+      <div class="screen-band">
+        <h1>Writeup</h1>
+        <p class="writeup-sub">How much of California's burned land grows back? · DSC 106 Project 3</p>
+      </div>
+
+      <div class="writeup-body">
+        <!--
+          How to fill this in: replace each paragraph marked class="todo" with your own writing,
+          then delete the "todo" class (or the whole note). The "Facts to draw on" lists are our
+          design notes, there to jog your memory; rewrite them in your own words or delete them.
+        -->
+
+        <section>
+          <h2>Team</h2>
+          <p class="todo">Names, and who did what.</p>
+        </section>
+
+        <section>
+          <h2>Our question</h2>
+          <p class="todo">One or two sentences: what we wanted to find out and why California fires.</p>
+        </section>
+
+        <section>
+          <h2>Data</h2>
+          <p class="todo">Where the data came from and how we turned it into "scarred" and "recovered".</p>
+          <details class="facts">
+            <summary>Facts to draw on</summary>
+            <ul>
+              <li>Burned area: NASA MODIS MCD64A1 (monthly burned area, about 500 m).</li>
+              <li>Greenness: MODIS NDVI from NASA GIBS; we read the map tiles' colors back into NDVI values and checked them against NASA's numeric data.</li>
+              <li>1 km cells across California, 2001–2026, one check every August.</li>
+              <li>"Scarred" = August greenness more than 0.05 below the cell's own pre-fire normal, after subtracting how much never-burned land within about 25 km changed that year.</li>
+              <li>Land that burns again moves to the newer fire, so no acre is counted twice.</li>
+            </ul>
+          </details>
+        </section>
+
+        <section>
+          <h2>Design rationale</h2>
+
+          <h3>Visual encodings</h3>
+          <p class="todo">Why one bar per fire year, why these three colors, why the percentages above the bars.</p>
+          <details class="facts">
+            <summary>Facts to draw on</summary>
+            <ul>
+              <li>Each bar is one year's fires: red = still scarred, green = recovered, gray = burned again later, light gray = not checked yet.</li>
+              <li>The scar color is a faded brick red rather than bright red, so it reads as a healed scar rather than an active fire.</li>
+              <li>Green numbers above the bars give the share recovered as of the August on the slider; an Acres/Proportion toggle switches bar height between size and share.</li>
+              <li>Instructions are blue, a color no data uses, so they never get mistaken for data.</li>
+            </ul>
+          </details>
+
+          <h3>Interaction</h3>
+          <p class="todo">How the slider, Watch it recover, clicking a bar, and the map work, and why.</p>
+          <details class="facts">
+            <summary>Facts to draw on</summary>
+            <ul>
+              <li>The slider is lined up with the bars: each August's stop sits just right of the last fire year that has been checked by then.</li>
+              <li>Clicking a bar zooms into it and opens a map of that land; the slider then starts at the fire's first check so Watch it recover shows the whole recovery.</li>
+              <li>Blue boxes magnify the one or two biggest burn areas, because whole-state burns are hard to see at full size.</li>
+              <li>The weather-broadcast theme frames the chart as a forecast-style graphic; the sidebar readouts follow the slider.</li>
+            </ul>
+          </details>
+
+          <h3>Choices we made and why</h3>
+          <p class="todo">The decisions a reader might question, and our reasons.</p>
+          <details class="facts">
+            <summary>Facts to draw on</summary>
+            <ul>
+              <li>Why August: greenness on the same land changes about 0.02 from one August to the next but about 0.06 from one January to the next, which is more than our 0.05 cutoff. By August the grass is brown everywhere, so what's left is trees and shrubs.</li>
+              <li>Each fire is first checked the August after its fire year: most fires burn July–November, so the fire year's own August would catch only some of them, weeks after they burned.</li>
+            </ul>
+          </details>
+
+          <h3>Alternatives we tried</h3>
+          <p class="todo">What earlier versions looked like and why we moved on.</p>
+          <details class="facts">
+            <summary>Facts to draw on</summary>
+            <ul>
+              <li>A stacked area chart, then stacked bars with one bar per August layered by burn year; readers took each bar to be one year's fire.</li>
+              <li>A comparison page: two-color stacked bars, a recovery curve by years since the fire, and bars grouped by age of burn.</li>
+              <li>A separate map panel below the chart, replaced by zooming into the clicked bar.</li>
+              <li>A newspaper-style look, then the weather-broadcast theme.</li>
+            </ul>
+          </details>
+        </section>
+
+        <section>
+          <h2>What we found</h2>
+          <p class="todo">The answer to our question, in a few sentences.</p>
+          <details class="facts">
+            <summary>Facts to draw on</summary>
+            <ul>
+              <li>As of August 2026, 48% of land burned since 2001 has grown back.</li>
+              <li>Across all fires, the share still scarred is about 78% one year after, under half by year 8, and about 14% by year 20.</li>
+              <li>2020 was the biggest fire year (about 3.6 million acres); 31% recovered by August 2026.</li>
+              <li>Recovery isn't one-way: in drought years (2007, 2012–13, 2021) many fire years get redder again.</li>
+            </ul>
+          </details>
+        </section>
+
+        <section>
+          <h2>Limitations</h2>
+          <p class="todo">What our measure can't tell, and where it could mislead.</p>
+          <details class="facts">
+            <summary>Facts to draw on</summary>
+            <ul>
+              <li>Greenness can't tell regrown forest from shrubs or grass, so a forest that turned into brushland can look "recovered".</li>
+              <li>About 4–5% of never-burned land falls below the cutoff in a typical year, so a little of the red is ordinary variation.</li>
+              <li>Young regrowth browns more in drought than nearby mature vegetation, so drought years can make land look scarred again.</li>
+            </ul>
+          </details>
+        </section>
+
+        <section>
+          <h2>Development process</h2>
+          <p class="todo">How we worked: who did what, roughly how long it took, what took the most time, what was hardest.</p>
+          <details class="facts">
+            <summary>Facts to draw on</summary>
+            <ul>
+              <li>Converting GIBS map-tile colors back into NDVI numbers, and checking them against NASA's numeric data.</li>
+              <li>Choosing a fair "normal" for each spot and removing wet and dry years using never-burned land nearby.</li>
+              <li>Rendering about 18,000 burned cells for 2020 smoothly (drawn on a canvas, with D3 handling zoom and positions).</li>
+            </ul>
+          </details>
+        </section>
+      </div>
+    </article>
+  </main>
+</body>
+</html>
