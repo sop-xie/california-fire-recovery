@@ -344,3 +344,44 @@ main.studio { padding-top: 14px; }
 
 /* Show the page at 90% size by default, like the browser's zoom set to 90%. */
 html { zoom: 0.9; }
+
+/* Tighter vertical spacing so the chart and map are taller (closer to the original's shape):
+   buttons sit closer to the subtitle, and the slider area is shorter. */
+.screen > .subtitle { margin: 10px 22px 2px; }
+.screen .slider-head { margin-top: 0; }
+.screen .slider-track { height: 48px; }
+.screen .year-slider { top: 26px; }
+
+/* ---------- Narrower windows ---------- */
+/* The conditions sidebar gives up width before the chart does. */
+main.studio { grid-template-columns: clamp(150px, 15vw, 210px) minmax(0, 1fr); }
+.conditions { padding: 14px 10px; }
+.dial { width: min(120px, 100%); height: auto; aspect-ratio: 1; }
+@media (max-width: 1150px) {
+  .cond-list dd { font-size: 1.45rem; }
+  .cond-place span { font-size: 1.15rem; }
+}
+
+/* Once the sidebar stacks above the chart, it becomes one short strip:
+   place and date, the three readouts in a row, and a small dial. */
+@media (max-width: 900px) {
+  main.studio { grid-template-columns: minmax(0, 1fr); }
+  .conditions {
+    position: static;
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px 20px;
+    padding: 10px 16px;
+  }
+  .cond-place { text-align: left; }
+  .cond-list { flex-direction: row; gap: 20px; }
+  .cond-list div { text-align: center; }
+  .cond-list dd { font-size: 1.35rem; }
+  .dial { width: 64px; margin: 0; }
+  .dial-text strong { font-size: 1.05rem; }
+  .dial-text span { display: none; }
+  .radar { display: none; }
+}

@@ -23,9 +23,11 @@ const OUTLINE = '#52514e';
 const MARGIN = { top: 32, right: 16, bottom: 44, left: 64 };
 const MIN_HEIGHT = 460;
 const MAX_HEIGHT = 780;
-const ZOOM_LABEL_ROOM = 190;  // px for the part labels between the zoomed bar and the map
+const MAP_SIDE_ROOM = 90;    // px beyond California's width in the map box (city names, hint)
+const ZOOM_LABEL_ROOM = 175;  // px for the part labels between the zoomed bar and the map
 const FIT_MIN_HEIGHT = 340;  // px; on short windows the page scrolls instead
-const FIT_BOTTOM_GAP = 40;   // px between the chart and the alert bar (screen padding and bezel)
+const FIT_BOTTOM_GAP = 26;   // px between the chart and the alert bar (screen padding and bezel)
+const MAP_MARGIN_GAP = 6;    // px the zoomed map stays clear of the chart's top and bottom edges
 const NEAR_BAR = 28;        // px above a bar's top that still counts as hovering it (covers its % label)
 const MIN_LABEL_BAND = 18;
 const MAX_LABEL_FONT = 16;
@@ -281,11 +283,17 @@ function computeLayout() {
 
   // California is taller than wide; leave room for it at full chart height when possible.
   const mapAspect = grid ? (grid.cols * Math.cos(((grid.north - grid.rows * grid.res / 2) * Math.PI) / 180)) / grid.rows : 0.87;
-  // Broadcast theme: the map takes all the width right of the bar and its labels, which leaves
-  // room beside California for the hint and city names.
-  const barWidth = Math.max(60, Math.min(140, innerWidth * 0.12));
-  const mapLeft = Math.min(ZOOM_BAR_LEFT + barWidth + ZOOM_LABEL_ROOM, innerWidth - innerHeight * mapAspect);
-  const mapWidth = innerWidth - mapLeft;
+  // The map box is sized to California (plus a little room for city names and the hint), as
+  // in the original layout, rather than stretched across the free width.
+  // The map box also uses the chart's top and bottom margins (kept for the bar's % label and
+  // the year axis, which the map doesn't need), so California can be drawn bigger.
+  const mapTop = MAP_MARGIN_GAP - MARGIN.top;  // relative to the top of the plot area
+  const mapHeight = innerHeight + (MARGIN.top - MAP_MARGIN_GAP) + (MARGIN.bottom - MAP_MARGIN_GAP);
+  // It never takes the room the zoomed bar and its labels need, on narrower windows.
+  const minBarAndLabels = ZOOM_BAR_LEFT + 60 + ZOOM_LABEL_ROOM;
+  const mapWidth = Math.min(innerWidth - minBarAndLabels, mapHeight * mapAspect + MAP_SIDE_ROOM);
+  const mapLeft = innerWidth - mapWidth;
+  const barWidth = Math.max(60, Math.min(150, mapLeft - ZOOM_BAR_LEFT - ZOOM_LABEL_ROOM));
 
   // Zoomed in, the chosen bar moves to the left and widens, and the others are spread far
   // enough apart that every one of them ends up past an edge of the chart, so they slide off
@@ -297,7 +305,7 @@ function computeLayout() {
     barX = (b) => (band(b) - band(zoomed)) * spread + ZOOM_BAR_LEFT;
     barW = barWidth;
   }
-  return { width, height, innerWidth, innerHeight, band, barX, barW, barWidth, mapLeft, mapWidth };
+  return { width, height, innerWidth, innerHeight, band, barX, barW, barWidth, mapLeft, mapWidth, mapTop, mapHeight };
 }
 
 function renderBars(motion) {
@@ -488,13 +496,13 @@ function renderPartLabels(y, step, delay) {
 
 // Position the map box over the right part of the plot area.
 function placeMap() {
-  const { mapLeft, mapWidth, innerHeight } = layout;
+  const { mapLeft, mapWidth, mapTop, mapHeight } = layout;
   const chartTop = chart.node().offsetTop;  // the slider sits above the chart in the same box
   d3.select('#zoom-map')
     .style('left', `${MARGIN.left + mapLeft}px`)
-    .style('top', `${chartTop + MARGIN.top}px`)
+    .style('top', `${chartTop + MARGIN.top + mapTop}px`)
     .style('width', `${mapWidth}px`)
-    .style('height', `${innerHeight}px`);
+    .style('height', `${mapHeight}px`);
 
   resizeMap();
 }
