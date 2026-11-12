@@ -589,9 +589,30 @@ function burnAt(event) {
   return my >= barTop - NEAR_BAR ? burnYear : null;
 }
 
+// A little flame cursor over clickable bars. The click point (15 2) is the flame's tip, and the
+// hand cursor is the fallback if the browser can't draw the picture.
+const FLAME_SVG = "<svg xmlns='http://www.w3.org/2000/svg' width='28' height='32' viewBox='0 0 28 32'>"
+  + "<defs><linearGradient id='g' x1='0' y1='1' x2='0' y2='0'><stop offset='0' stop-color='#fbbf24'/>"
+  + "<stop offset='.5' stop-color='#f97316'/><stop offset='1' stop-color='#dc2626'/></linearGradient></defs>"
+  + "<path d='M14 31C6 31 3 25 4.5 19.5C5.5 15.5 8.5 13 9 8.5C11.5 10.5 12 13 11.8 15C14 11.5 15.5 6.5 14.5 1.5"
+  + "C20 5 25 12 24.5 20C24 26.5 20 31 14 31Z' fill='url(#g)' stroke='#7c2d12' stroke-width='1.3' stroke-linejoin='round'/>"
+  + "<path d='M14 28.5C10.8 28.5 9.4 26.2 9.9 23.8C10.4 21.5 12.1 20.3 12.6 18C14.4 19.4 14.9 21.2 14.7 22.6"
+  + "C15.9 21.6 16.8 20.1 16.9 18.3C18.8 20.2 19.4 22.5 19 24.5C18.5 27 16.5 28.5 14 28.5Z' fill='#fef3c7'/></svg>";
+const FLAME_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(FLAME_SVG)}") 15 2, pointer`;
+// In fire mode the cursor is a water drop instead, to put the fire out. Click point: the drop's tip.
+const DROP_SVG = "<svg xmlns='http://www.w3.org/2000/svg' width='24' height='32' viewBox='0 0 24 32'>"
+  + "<defs><linearGradient id='d' x1='0' y1='0' x2='1' y2='1'><stop offset='0' stop-color='#bae6fd'/>"
+  + "<stop offset='.55' stop-color='#38bdf8'/><stop offset='1' stop-color='#1d4ed8'/></linearGradient></defs>"
+  + "<path d='M12 1.5C14 7 21.5 14.5 21.5 21C21.5 26.5 17.3 30.5 12 30.5C6.7 30.5 2.5 26.5 2.5 21C2.5 14.5 10 7 12 1.5Z'"
+  + " fill='url(#d)' stroke='#1e3a8a' stroke-width='1.3' stroke-linejoin='round'/>"
+  + "<path d='M7.2 20.5C7.2 17.8 8.6 15.5 10 13.6' fill='none' stroke='#fff' stroke-width='2' stroke-linecap='round' opacity='.85'/>"
+  + "<circle cx='7.4' cy='24' r='1.2' fill='#fff' opacity='.8'/></svg>";
+const DROP_CURSOR = `url("data:image/svg+xml,${encodeURIComponent(DROP_SVG)}") 12 2, pointer`;
+
 function hover(event) {
   const burnYear = burnAt(event);
-  hitArea.style('cursor', burnYear !== null && zoomed === null ? 'pointer' : 'default');
+  const barCursor = fireMode() ? DROP_CURSOR : FLAME_CURSOR;
+  hitArea.style('cursor', burnYear !== null && zoomed === null ? barCursor : 'default');
   if (burnYear === null) {
     tooltip.property('hidden', true);
     hoverOutline.style('display', 'none');

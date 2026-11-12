@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap">
   <link rel="stylesheet" href="style.css?v=final-1">
-  <link rel="stylesheet" href="weather.css?v=final-16">
+  <link rel="stylesheet" href="weather.css?v=final-20">
   <link rel="stylesheet" href="fire.css?v=final-17">
   <!-- Turn fire mode on before the page draws, if this visitor chose it last time. -->
   <script>try { if (localStorage.getItem('fireMode') === '1') document.documentElement.classList.add('fire-mode'); } catch (e) {}</script>
@@ -59,128 +59,329 @@
       </div>
 
       <div class="writeup-body">
-        <!--
-          How to fill this in: replace each paragraph marked class="todo" with your own writing,
-          then delete the "todo" class (or the whole note). The "Facts to draw on" lists are our
-          design notes, there to jog your memory; rewrite them in your own words or delete them.
-        -->
+        <nav class="writeup-toc" aria-label="Sections">
+          <a href="#team">Team</a>
+          <a href="#question">Question</a>
+          <a href="#data">Data</a>
+          <a href="#rationale">Design rationale</a>
+          <a href="#alternatives">Alternatives</a>
+          <a href="#found">What we found</a>
+          <a href="#limits">Limitations</a>
+          <a href="#process">Development process</a>
+        </nav>
 
-        <section>
+        <section id="team">
           <h2>Team</h2>
-          <p class="todo">Names, and who did what.</p>
+          <ul class="team">
+            <li><strong>Connor Day</strong> · coday@ucsd.edu</li>
+            <li><strong>Ethan Dam</strong> · eddam@ucsd.edu</li>
+            <li><strong>Sophie Xie</strong> · sax006@ucsd.edu</li>
+          </ul>
         </section>
 
-        <section>
+        <section id="question">
           <h2>Our question</h2>
-          <p class="todo">One or two sentences: what we wanted to find out and why California fires.</p>
+          <p>Since we hear all the time that California is constantly burning, the questions we wanted to
+            answer were:</p><p>Does California recover from all the burning it undergoes? If so, how long
+            does it take to recover?</p>
         </section>
 
-        <section>
+        <section id="data">
           <h2>Data</h2>
-          <p class="todo">Where the data came from and how we turned it into "scarred" and "recovered".</p>
-          <details class="facts">
-            <summary>Facts to draw on</summary>
-            <ul>
-              <li>Burned area: NASA MODIS MCD64A1 (monthly burned area, about 500 m).</li>
-              <li>Greenness: MODIS NDVI from NASA GIBS; we read the map tiles' colors back into NDVI values and checked them against NASA's numeric data.</li>
-              <li>1 km cells across California, 2001–2026, one check every August.</li>
-              <li>"Scarred" = August greenness more than 0.05 below the cell's own pre-fire normal, after subtracting how much never-burned land within about 25 km changed that year.</li>
-              <li>Land that burns again moves to the newer fire, so no acre is counted twice.</li>
-            </ul>
-          </details>
+          <p>Everything comes from two NASA satellite products, both from the MODIS sensor and both
+            covering 2001 to 2026:</p>
+          <ul>
+            <li><strong>Where and when land burned:</strong> MCD64A1, NASA's monthly burned area
+              product, at about 500 m. We downloaded it from the ORNL DAAC web service in 200 km
+              boxes, since that service only returns small areas at a time, and kept every burned
+              pixel inside California with the month it burned.</li>
+            <li><strong>How green the land is:</strong> monthly MODIS Terra NDVI (a standard
+              greenness index) from NASA GIBS. GIBS only serves map images, not numbers, so we
+              downloaded each month as a picture at about 1 km and used the layer's published color
+              key to turn every pixel's color back into an NDVI value. We checked these against NASA's
+              numeric NDVI data to make sure the conversion was right.</li>
+          </ul>
+          <p>We put both on the same 1 km grid of California. A grid cell counts as burned in a year
+            if at least half of it burned that year.</p>
+
+          <h3>From greenness to "scarred" and "recovered"</h3>
+          <p>For every burned cell we look at its August greenness each year and compare it with
+            what is normal for that exact spot:</p>
+          <ol>
+            <li><strong>Normal</strong> is the cell's median August NDVI from the years before it
+              first burned. (Land that burned in 2001 or 2002 doesn't have enough clean years before
+              the fire, so it uses every year.)</li>
+            <li><strong>Remove the weather.</strong> A dry year makes all the land in a region browner,
+              burned or not. So each year we subtract how much never-burned land within about 25 km
+              changed from its own normal; what's left is mostly the fire.</li>
+            <li><strong>Scarred</strong> means the cell is still more than 0.05 NDVI below normal
+              after that adjustment. Everything else counts as <strong>recovered</strong>.</li>
+            <li><strong>Burned again.</strong> If land burns a second time, it moves to the newer
+              fire year, and the older year shows it as "burned again later." This way, no acre is
+              counted twice, and the percent recovered only counts land that hasn't burned since.</li>
+          </ol>
+          <p>The site loads one small CSV (scarred, recovered and burned-again acres for each fire year
+            in each August) and one JSON file per fire year with the cells for its map. The Python
+            scripts that build these are in our <code>exploratory/</code> folder.</p>
         </section>
 
-        <section>
+        <section id="rationale">
           <h2>Design rationale</h2>
 
           <h3>Visual encodings</h3>
-          <p class="todo">Why one bar per fire year, why these three colors, why the percentages above the bars.</p>
-          <details class="facts">
-            <summary>Facts to draw on</summary>
-            <ul>
-              <li>Each bar is one year's fires: red = still scarred, green = recovered, gray = burned again later, light gray = not checked yet.</li>
-              <li>The scar color is a faded brick red rather than bright red, so it reads as a healed scar rather than an active fire.</li>
-              <li>Green numbers above the bars give the share recovered as of the August on the slider; an Acres/Proportion toggle switches bar height between size and share.</li>
-              <li>Instructions are blue, a color no data uses, so they never get mistaken for data.</li>
-            </ul>
-          </details>
+          <p>For the color encodings, we chose a faded brick red
+            <span class="swatch" style="background:#aa4738"></span>instead of a bright red, so it
+            emulates a healed scar more than an active fire. We used a green
+            <span class="swatch" style="background:#8fc66b"></span>to represent recovered, because
+            we're using greenness to measure how the land is recovering from the burns. We use gray
+            <span class="swatch" style="background:#8a8780"></span>to indicate "burned again later,"
+            because it is not the main point of our visualization, yet also important to keep in our
+            vis. The green numbers above the bars are a bold green to also mirror the green of the
+            recovered bar, to draw the parallel of recovery.</p>
+          <p>We put the instructions in blue so that it doesn't conflict with any of the other colors,
+            and so it also draws the viewer's attention when you first see it to incite them to
+            complete an action. Also, before the user interacts with our visual at all, the arrows
+            blink and move to indicate that there's an interactive element in our graph. The big red
+            play button is a reflection of our weather channel theme, as well as an indicator for the
+            user to click on.</p>
+          <p>There are a lot more smaller visual encodings, including but not limited to:</p>
+          <ul>
+            <li>the blue boxes on the map to magnify the largest burn areas for the viewer's
+              convenience</li>
+            <li>text annotations to guide the user and let them know how they can interact with our
+              visual</li>
+            <li>color/theme coded legend and buttons</li><li>the numbers above the bars inform the users the exact percentage of recovery, without having to estimate</li>
+            <li>city labels on the map (Redding, Sacramento, San Francisco, Fresno, Los Angeles, San
+              Diego) so users can tell where the fires were</li>
+            <li>a "current conditions" sidebar, like a TV weather report, with the recovered and
+              scarred numbers, a dial, and a mini radar map that all update with the slider</li>
+            <li>a news ticker along the bottom with key facts from our data</li>
+          </ul>
+          <p class="added">Each bar is one year's fires, and its height is how many acres burned that
+            year. A light gray bar <span class="swatch" style="background:#d6d4cc"></span>means that
+            fire year hasn't been checked yet in the August on the slider. The map uses the same colors
+            as the bars, so you can read them together.</p>
 
           <h3>Interaction</h3>
-          <p class="todo">How the slider, Watch it recover, clicking a bar, and the map work, and why.</p>
-          <details class="facts">
-            <summary>Facts to draw on</summary>
-            <ul>
-              <li>The slider is lined up with the bars: each August's stop sits just right of the last fire year that has been checked by then.</li>
-              <li>Clicking a bar zooms into it and opens a map of that land; the slider then starts at the fire's first check so Watch it recover shows the whole recovery.</li>
-              <li>Blue boxes magnify the one or two biggest burn areas, because whole-state burns are hard to see at full size.</li>
-              <li>The weather-broadcast theme frames the chart as a forecast-style graphic; the sidebar readouts follow the slider.</li>
-            </ul>
-          </details>
+          <p>Interactive encodings: the slider lines up with the bars, so that wherever the
+            slider is at, it's right on top of the corresponding year/bar. Clicking on a bar nicely
+            transitions into a bigger version of that bar, and simultaneously opens a map of that land.
+            (Small encodings: where the slider starts when you go back and forth between all years and
+            singular years.) The map is interactive; users are able to drag and zoom to view the burned
+            areas as much as they desire.&nbsp;</p><p>Some more features:&nbsp;</p>
+          <ul class="added">
+            <li>"Watch it recover" plays through every August. The bars change in place instead of
+              growing up from zero.</li>
+            <li>The Acres/Proportion toggle switches the bars between acres and percent, since small
+              fire years are hard to see next to 2020</li>
+            <li>Hovering over a bar or the map shows the numbers right where the mouse is, and we also made it color coded for an easier read</li>
+            <li>Clicking a blue box on the map zooms in on that burn.</li><li>Hovering over a bar turns your mouse into a little fire icon!</li>
+            <li>You don't have to hit a bar exactly. Hovering or clicking a little above a bar still
+              works, so short bars like 2010 are easy to click.</li>
+            <li>The page's link saves what you're looking at (the year, the bar you clicked, and
+              Acres/Proportion), so if you share it, it opens to the same view.</li>
+          </ul><div>Easter eggs:</div><div><ul class="added"><li>Clicking the feather at the top turns it into a shoebill</li><li>Clicking the 'fire mode' button turns everything red, and the feather/shoebill are now on fire</li></ul></div>
 
           <h3>Choices we made and why</h3>
-          <p class="todo">The decisions a reader might question, and our reasons.</p>
-          <details class="facts">
-            <summary>Facts to draw on</summary>
-            <ul>
-              <li>Why August: greenness on the same land changes about 0.02 from one August to the next but about 0.06 from one January to the next, which is more than our 0.05 cutoff. By August the grass is brown everywhere, so what's left is trees and shrubs.</li>
-              <li>Each fire is first checked the August after its fire year: most fires burn July–November, so the fire year's own August would catch only some of them, weeks after they burned.</li>
-            </ul>
-          </details>
+          <dl class="choices">
+            <dt>Checking greenness in August, not January</dt>
+            <dd>January seemed like the obvious place to start since we count in years, but it turns out, it is the
+              worst month for this. Greenness on the same land typically changes about 0.06 from one
+              January to the next, which is already more than our 0.05 cutoff, so a dry winter would
+              look like fire damage across much of the state. August changes only about 0.02 between
+              years. By August the grass is brown everywhere, so the green that's left is mostly trees
+              and shrubs, which is where fire damage lasts.</dd>
 
-          <h3>Alternatives we tried</h3>
-          <p class="todo">What earlier versions looked like and why we moved on.</p>
-          <details class="facts">
-            <summary>Facts to draw on</summary>
-            <ul>
-              <li>A stacked area chart, then stacked bars with one bar per August layered by burn year; readers took each bar to be one year's fire.</li>
-              <li>A comparison page: two-color stacked bars, a recovery curve by years since the fire, and bars grouped by age of burn.</li>
-              <li>A separate map panel below the chart, replaced by zooming into the clicked bar.</li>
-              <li>A newspaper-style look, then the weather-broadcast theme.</li>
-            </ul>
-          </details>
+            <dt>The first check is the August after the fire year</dt>
+            <dd>Most California fires burn between July and November, so the fire year's own August
+              would catch only some of its fires, and often before they had burned. A fire in
+              September 2020 is first checked in August 2021, then August 2022, and so on. Every fire
+              gets a full season before it is measured, and every fire year is measured the same
+              way.</dd>
+
+            <dt>One bar per fire year, with a slider for time</dt>
+            <dd>Our first chart had one bar per August, with all the land burned so far stacked
+              inside it. It was super confusing, and people read each bar as that year's fire, and it wasn't clear whether green
+              meant "recovered by now" or "recovered during that year." Now, with one bar per fire year,
+              each bar is exactly one year's land, and the slider picks the moment you're looking
+              at. Older fires sit on the left and have had more time to recover, so reading left to
+              right already shows recovery over time.</dd>
+
+            <dt>Graying out future years instead of hiding them</dt>
+            <dd>When the slider is at an older August, fire years that haven't happened or haven't
+              been checked yet stay on the chart as light gray bars. The axis doesn't jump around
+              while dragging, and you can see how much fire is still coming.</dd>
+
+            <dt>Removing wet and dry years using nearby unburned land</dt>
+            <dd>A dry year makes all the land browner, burned or not, so without this step a drought
+              would look like fire damage. Comparing each spot with never-burned land around it keeps
+              the measure about fire, not rain.</dd>
+
+            <dt>Moving reburned land to the newer fire</dt>
+            <dd>A lot of California burns more than once, so counting it in both years would double count
+              it and make recovery look worse than it is, so each acre belongs to the most recent fire
+              that touched it. Unfortunately, the tradeoff is that a lot of the bars contain a huge portion we can't see if it has recovered or still stayed scarred.</dd>
+
+            <dt>Where the instructions should go</dt>
+            <dd>We needed a way to tell users how they can interact with our map, so adding the blue instructions above the slider and pointing at a bar in the white area helps them with the two most important interactions. There was an iteration where the 'Click a bar to watch that year recover' tag would move with the mouse, but it was way too distracting.&nbsp;</dd>
+
+            <dt>Magnifying the biggest burns</dt>
+            <dd>At the size of the whole state, most burns are only a few pixels across. The one or two
+              biggest burn areas get a magnified close-up in a blue box, sized to the shape of the burn
+              so it isn't stretched.</dd>
+
+            <dt>Changing the title</dt>
+            <dd>Our first title was "Do California fires ever recover?" We changed it to "How much of
+              California's burned land grows back?" because the answer isn't a yes or no, and it's the
+              land that grows back, not the fire.</dd>
+
+            <dt>A weather broadcast theme</dt>
+            <dd>Recovery happens year by year like a forecast, and people already know how to read a
+              weather report: a big title, a "current conditions" readout and a ticker along the
+              bottom. The theme makes the page feel less like a homework chart and gives us natural
+              places for the summary numbers.</dd>
+          </dl>
         </section>
 
-        <section>
+        <section id="alternatives">
+          <h2>Alternatives we tried</h2>
+          <p>Our design changed a lot. These are the main versions we built, in order. Click any
+            picture to see it full size.</p>
+
+          <ol class="timeline">
+            <li>
+              <span class="when">Nov 3 · Checkpoint</span>
+              <h3>A stacked area chart in Python</h3>
+              <a href="images/1-python-prototype.jpg" target="_blank" rel="noopener"><img src="images/1-python-prototype.jpg" alt="Stacked area chart of acres still scarred each August, layered in five shades of red by when the land last burned." loading="lazy"></a>
+              <p>Our first prototype showed only the scarred acres each August, layered by when the land
+                last burned, in five shades of red. It showed that the scarred total was growing, but
+                not how much had recovered, and the shades were hard to tell apart. We had also looked
+                at Tulare Lake, which came back in 2023, but dropped it to stay focused on fire.</p>
+            </li>
+            <li>
+              <span class="when">Nov 9</span>
+              <h3>Stacked bars, one per August</h3>
+              <a href="images/2-stacked-by-august.jpg" target="_blank" rel="noopener"><img src="images/2-stacked-by-august.jpg" alt="Stacked bar chart with one bar per August from 2002 to 2026, red for still scarred and green for recovered." loading="lazy"></a>
+              <p>Our first D3 version added green for recovered land. Each bar was one August and every acre burned before it, with thin lines between fire years. It was way too difficult to read, and even we got confused as to what the stacks on each bar meant. In addition, it was really hard to distinguish the changes and recovery rates of each year.</p>
+            </li>
+            <li>
+              <span class="when">Nov 9</span>
+              <h3>Comparing three chart types</h3>
+              <a href="images/3-three-options.jpg" target="_blank" rel="noopener"><img src="images/3-three-options.jpg" alt="A comparison page with a two-color stacked bar chart and a recovery curve by years since the fire." loading="lazy"></a>
+              <p>We knew there needed to be a change on how to communicate and display the concept, but we couldn't think of anything yet. So, we tried a few more bar charts and line graphs. The line graph is not very interactive, and the new bar graph was a good lead to where we are now. We wanted something where you could focus on each individual year and zoom into it, and this seemed perfect.&nbsp;</p></li>
+            <li>
+              <span class="when">Nov 9–10</span>
+              <h3>One bar per fire year, with a slider</h3>
+              <a href="images/4-one-bar-per-fire-year.jpg" target="_blank" rel="noopener"><img src="images/4-one-bar-per-fire-year.jpg" alt="Bar chart with one bar per fire year and a slider set to August 2020; bars from 2020 onward are light gray." loading="lazy"></a><p><span style="font-size: 1.15rem;">We always had a vision of an interactive slider&nbsp;</span><span style="font-size: 1.15rem;">where the user could see the land data actually recovering in real time&nbsp;</span><span style="font-size: 1.15rem;">at whichever time they chose,</span><span style="font-size: 1.15rem;">&nbsp;so we added one a</span><span style="font-size: 1.15rem; background-color: rgba(31, 95, 168, 0.06);">fter building the bar chart with individual years. Additionally, the numbers on top of the bars allow the user to see, in real time, the recovery rate of that year. We kept the idea of clicking on a bar and seeing a map, but we added the bar next to it for an even better visual.&nbsp;</span></p></li>
+            <li>
+              <span class="when">Nov 10–11</span>
+              <h3>The weather broadcast theme</h3>
+              <a href="images/5-weather-overview.jpg" target="_blank" rel="noopener"><img src="images/5-weather-overview.jpg" alt="The final site styled as a TV weather broadcast, with a navy station bar, a conditions sidebar and an alert ticker." loading="lazy"></a>
+              <p>The website looked plain and boring with just the white background and black font, so one of us had the idea to make it look like a weather channel infographic. That's how the weather/news channel theme was born, and it fits pretty well with our topic. It adds something more fun and interactive for the user as well. For fun, we also added the fire mode, because our topic is focused on fire.</p>
+              <div class="timeline-pair">
+                <a href="images/6-weather-zoomed.jpg" target="_blank" rel="noopener"><img src="images/6-weather-zoomed.jpg" alt="The zoomed view of 2020: one large bar next to a map of California with two magnified burn areas." loading="lazy"></a>
+                <a href="images/7-fire-mode.jpg" target="_blank" rel="noopener"><img src="images/7-fire-mode.jpg" alt="The same chart in fire mode, with a charcoal and orange page around it." loading="lazy"></a>
+              </div>
+              <p class="caption">Left: clicking the 2020 bar. Right: fire mode.</p>
+            </li>
+          </ol>
+        </section>
+
+        <section id="found">
           <h2>What we found</h2>
-          <p class="todo">The answer to our question, in a few sentences.</p>
-          <details class="facts">
-            <summary>Facts to draw on</summary>
-            <ul>
-              <li>As of August 2026, 48% of land burned since 2001 has grown back.</li>
-              <li>Across all fires, the share still scarred is about 78% one year after, under half by year 8, and about 14% by year 20.</li>
-              <li>2020 was the biggest fire year (about 3.6 million acres); 31% recovered by August 2026.</li>
-              <li>Recovery isn't one-way: in drought years (2007, 2012–13, 2021) many fire years get redder again.</li>
-            </ul>
-          </details>
+          <p>Most burned land does grow back, but it takes a long time. As of August 2026, 48% of the
+            land that burned in California since 2001 has recovered. One year after a fire, about 78%
+            of the land is still scarred. That drops to under half by year 8 and to about 14% by year
+            20.</p>
+          <p>2020 was by far the biggest fire year, with about 3.6 million acres, and only 31% of it
+            has recovered so far. Since so much of California burned in the last few years, the
+            statewide number is held down by young fires that haven't had time to grow back yet.</p>
+          <p><b>Recovery also isn't one-way. </b>As you can see, the red (scarred) increases over time sometimes in our bars. It's not a glitch—in drought years, many fire years get redder again. In August
+            2021, 17 of the 19 fire years we had checked looked more scarred than the year before, and
+            in August 2013 it was 10 of 11. Regrowth sometimes dries out in droughts before it can grow into a big, luscious area.</p>
         </section>
 
-        <section>
+        <section id="limits">
           <h2>Limitations</h2>
-          <p class="todo">What our measure can't tell, and where it could mislead.</p>
-          <details class="facts">
-            <summary>Facts to draw on</summary>
-            <ul>
-              <li>Greenness can't tell regrown forest from shrubs or grass, so a forest that turned into brushland can look "recovered".</li>
-              <li>About 4–5% of never-burned land falls below the cutoff in a typical year, so a little of the red is ordinary variation.</li>
-              <li>Young regrowth browns more in drought than nearby mature vegetation, so drought years can make land look scarred again.</li>
-            </ul>
-          </details>
+          <ul>
+            <li>Greenness can't tell regrown forest from shrubs or grass. A forest that came back as
+              brushland can look "recovered" even though it is a different landscape.</li>
+            <li>About 4–5% of never-burned land falls below our cutoff in a typical year, so a small
+              part of the red is ordinary year-to-year variation, not fire.</li>
+            <li>The 1 km grid and the "half the cell burned" rule miss small fires and blur the edges
+              of big ones.</li>
+            <li>Fires from 2026 aren't shown yet, because they haven't had an August after their fire
+              year.</li>
+          </ul>
         </section>
 
-        <section>
+        <section id="process">
           <h2>Development process</h2>
-          <p class="todo">How we worked: who did what, roughly how long it took, what took the most time, what was hardest.</p>
-          <details class="facts">
-            <summary>Facts to draw on</summary>
-            <ul>
-              <li>Converting GIBS map-tile colors back into NDVI numbers, and checking them against NASA's numeric data.</li>
-              <li>Choosing a fair "normal" for each spot and removing wet and dry years using never-burned land nearby.</li>
-              <li>Rendering about 18,000 burned cells for 2020 smoothly (drawn on a canvas, with D3 handling zoom and positions).</li>
-            </ul>
-          </details>
+          <p class="todo">Who did what: We met up and worked together!</p>
+          <p class="todo">Roughly how long it took, in hours: [~12 hours total]</p>
+          <p>The parts that took the most time were:</p>
+          <ul>
+            <li><strong>Getting the data into numbers.</strong> GIBS only gives map images, so we
+              had to turn the colors back into NDVI values and check them against NASA's numeric data.
+              The burned area service only returns small boxes, so covering the whole state took many
+              overlapping downloads.</li>
+            <li><strong>Deciding what "recovered" means.</strong> Picking a fair "normal" for each spot,
+              picking the month (August, after finding out January was too noisy), choosing when to
+              start counting, and removing wet and dry years using nearby unburned land took several
+              rounds of checking results that looked wrong.</li>
+            <li><strong>Redesigning the main chart.</strong> We went through five versions (see the
+              timeline above) before the one-bar-per-fire-year chart felt easy to read. It was hard to move on from a chart we already thought we settled on, and redesigning the whole thing to visualize it in a completely different way.</li>
+            <li><strong>Small details.</strong> It took A LOT of work and nitpicking small details to make the website as user-friendly as possible, and as smooth as possible. A lot of sizing issues, color details, and encoding changes were made constantly.&nbsp;</li>
+          </ul>
         </section>
-      </div>
+      </div><!-- end writeup-body -->
     </article>
   </main>
+
+  <!-- Edit mode, only on your own computer: open localhost:8765/writeup.html?edit, type into the
+       page, and press Save (or Cmd+S). Needs the edit server (proj3/tools/edit_server.py). -->
+  <script>
+  (() => {
+    const local = ['localhost', '127.0.0.1'].includes(location.hostname);
+    if (!local || !new URLSearchParams(location.search).has('edit')) return;
+    const body = document.querySelector('.writeup-body');
+    body.contentEditable = 'true';
+    body.spellcheck = true;
+    document.body.classList.add('editing');
+
+    const bar = document.createElement('div');
+    bar.className = 'edit-bar';
+    bar.innerHTML = '<span class="edit-status">Editing. Click any text to change it. Cmd+B bold, Cmd+I italic.</span>'
+      + '<button type="button" class="edit-save">Save</button>';
+    document.body.append(bar);
+    const status = bar.querySelector('.edit-status');
+    const button = bar.querySelector('.edit-save');
+    let dirty = false;
+    body.addEventListener('input', () => { dirty = true; status.textContent = 'Unsaved changes'; });
+    // Links shouldn't open while editing; click puts the cursor in the text instead.
+    body.addEventListener('click', (event) => { if (event.target.closest('a')) event.preventDefault(); });
+
+    async function save() {
+      status.textContent = 'Saving…';
+      try {
+        const response = await fetch('/save-writeup', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ html: body.innerHTML }),
+        });
+        if (!response.ok) throw new Error(await response.text());
+        dirty = false;
+        status.textContent = `Saved at ${new Date().toLocaleTimeString()}`;
+      } catch (error) {
+        status.textContent = 'Could not save. Is the edit server running? (' + error.message + ')';
+      }
+    }
+    button.addEventListener('click', save);
+    window.addEventListener('keydown', (event) => {
+      if ((event.metaKey || event.ctrlKey) && event.key === 's') { event.preventDefault(); save(); }
+    });
+    window.addEventListener('beforeunload', (event) => { if (dirty) event.preventDefault(); });
+  })();
+  </script>
 </body>
 </html>
