@@ -9,8 +9,8 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:ital,wght@0,400;0,500;0,600;0,700;0,800;1,700;1,800&display=swap">
   <!-- Base styles from the main page, then the broadcast theme on top. -->
   <link rel="stylesheet" href="style.css?v=final-1">
-  <link rel="stylesheet" href="weather.css?v=final-20">
-  <link rel="stylesheet" href="fire.css?v=final-17">
+  <link rel="stylesheet" href="weather.css?v=final-21">
+  <link rel="stylesheet" href="fire.css?v=final-18">
   <!-- Turn fire mode on before the page draws, if this visitor chose it last time. -->
   <script>try { if (localStorage.getItem('fireMode') === '1') document.documentElement.classList.add('fire-mode'); } catch (e) {}</script>
 </head>
@@ -114,7 +114,7 @@
               <ul id="legend" class="legend legend-big"></ul>
               <p class="legend-note">
                 <span class="pct-sample">48%</span>
-                Percent of land that has recovered by the year selected.
+                <span class="pct-note">Percent of land recovered by August 2026</span>
               </p>
             </aside>
           </div>
@@ -196,6 +196,6 @@
 
   <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
   <script src="main.js?v=final-21"></script>
-  <script src="broadcast.js?v=final-17"></script>
+  <script src="broadcast.js?v=final-19"></script>
 </body>
 </html>

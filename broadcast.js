@@ -47,6 +47,9 @@ function refreshConditions() {
   d3.select('#cond-scarred').text(counted ? pct(1 - share) : '–');
   d3.select('#cond-reburned').text(`${shortAcres(reburned)} ac`);
   d3.select('#dial-value').text(counted ? pct(share) : '–');
+  // The legend's big green number follows the slider (and the zoomed fire year) too.
+  d3.select('.pct-sample').text(counted ? pct(share) : '–');
+  d3.select('.pct-note').text(`Percent of land recovered by August ${year}`);
   dialFill.attr('stroke-dashoffset', DIAL_LENGTH * (1 - share));
   drawRadarAreas();
 }

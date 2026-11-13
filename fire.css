@@ -68,8 +68,8 @@ html.fire-mode .screen-band {
 html.fire-mode .screen-band h1 { color: #fff7ed; text-shadow: 0 2px 0 rgb(0 0 0 / 45%), 0 0 18px rgb(249 115 22 / 45%); }
 
 /* ---------- Controls and legend on the screen ---------- */
-html.fire-mode .screen .slider-head .play { border-color: #dc2626; color: #b91c1c; }
-html.fire-mode .screen .slider-head .play:hover { background: #dc2626; color: #fff; }
+html.fire-mode .screen .slider-head .play { border-color: #dc2626; background: #dc2626; color: #fff; box-shadow: 0 3px 10px rgb(220 38 38 / 30%); }
+html.fire-mode .screen .slider-head .play:hover { border-color: #991b1b; background: #991b1b; color: #fff; }
 html.fire-mode .screen .back-button { border-color: var(--navy-2); color: var(--navy-2); }
 html.fire-mode .screen .mode-buttons button[aria-pressed="true"] { border-bottom-color: #f97316; }
 html.fire-mode .screen .legend-box { border-top-color: #f97316; }

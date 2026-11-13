@@ -277,18 +277,19 @@ main.studio { padding-top: 14px; }
 .screen > .subtitle { margin: 12px 22px 16px; }  /* room above and below the subtitle */
 
 /* ---------- Controls and legend: light, navy outlines, small touches of the accents ---------- */
-/* Watch it recover: light button outlined in the alert red; fills red only on hover. */
+/* Watch it recover: solid alert red with white text, so it's the first thing to click. */
 .screen .slider-head .play {
   border: 2px solid var(--alert);
   border-radius: 8px;
   padding: 8px 18px;
-  background: #fff;
-  color: var(--alert);
+  background: var(--alert);
+  color: #fff;
+  box-shadow: 0 3px 10px rgb(197 22 29 / 28%);
   font: italic 700 1.2rem var(--tv);
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
-.screen .slider-head .play:hover { background: var(--alert); color: #fff; }
+.screen .slider-head .play:hover { background: #9e1219; border-color: #9e1219; color: #fff; }
 /* Back to all fire years: navy outline. */
 .screen .back-button {
   border: 2px solid var(--navy-2);
